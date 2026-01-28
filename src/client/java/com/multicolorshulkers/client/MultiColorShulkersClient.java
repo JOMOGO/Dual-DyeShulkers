@@ -4,6 +4,7 @@ import com.multicolorshulkers.ColorSyncPayload;
 import com.multicolorshulkers.MultiColorShulkers;
 import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.util.math.BlockPos;
 
@@ -12,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MultiColorShulkersClient implements ClientModInitializer {
 
-	// Client-side cache of shulker colors
+	// Client-side cache of shulker colors for placed blocks
 	public static final Map<BlockPos, ShulkerColors> COLOR_CACHE = new ConcurrentHashMap<>();
 
 	@Override
@@ -26,6 +27,9 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 			MultiColorShulkers.LOGGER.info("[CLIENT] Received colors for {}: top={}, bottom={}",
 				pos, colors.topColor(), colors.bottomColor());
 		});
+
+		// Register tooltip callback
+		ItemTooltipCallback.EVENT.register(ShulkerBoxTooltipCallback::addTooltip);
 	}
 
 	public static ShulkerColors getColors(BlockPos pos) {

@@ -3,8 +3,8 @@
 	"minVersion": "0.8",
 	"package": "com.multicolorshulkers.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"client": [
-		"ShulkerBoxBlockEntityRendererMixin"
+	"mixins": [
+		"ShulkerBoxBlockEntityMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
