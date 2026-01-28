@@ -27,117 +27,96 @@ public class ShulkerBoxBlockEntityRendererMixin {
 
     @Shadow
     @Final
-    private ShulkerBoxBlockEntityRenderer.ShulkerBoxBlockModel model;
+    public ShulkerBoxBlockEntityRenderer.ShulkerBoxBlockModel model;
 
+    // For placed blocks - check COLOR_CACHE
     @Inject(method = "render(Lnet/minecraft/block/entity/ShulkerBoxBlockEntity;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;II)V",
             at = @At("HEAD"),
             cancellable = true)
     private void onRender(ShulkerBoxBlockEntity shulkerBox, float tickDelta, MatrixStack matrices,
                           VertexConsumerProvider vertexConsumers, int light, int overlay, CallbackInfo ci) {
-        // Check if we have custom colors for this shulker box
         ShulkerColors colors = MultiColorShulkersClient.getColors(shulkerBox.getPos());
 
         if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) {
-            // No custom colors, let the original render proceed
             return;
         }
 
-        // Cancel the original render and do our own
         ci.cancel();
+        renderWithColors(shulkerBox, tickDelta, matrices, vertexConsumers, light, overlay, colors);
+    }
 
-        // Get the facing direction
+    private void renderWithColors(ShulkerBoxBlockEntity shulkerBox, float tickDelta, MatrixStack matrices,
+                                  VertexConsumerProvider vertexConsumers, int light, int overlay, ShulkerColors colors) {
         Direction direction = Direction.UP;
         BlockState blockState = shulkerBox.getCachedState();
         if (blockState.contains(ShulkerBoxBlock.FACING)) {
             direction = blockState.get(ShulkerBoxBlock.FACING);
         }
 
-        // Get the base color of the shulker box (for texture selection)
-        // Note: getColor() returns null for undyed shulker boxes
+        // Get the base color of the shulker (for fallback when only one color is set)
         DyeColor baseColor = shulkerBox.getColor();
-        SpriteIdentifier spriteIdentifier;
-        if (baseColor == null) {
-            // Use the default undyed shulker box texture
-            spriteIdentifier = TexturedRenderLayers.SHULKER_TEXTURE_ID;
-        } else {
-            spriteIdentifier = TexturedRenderLayers.getShulkerBoxTextureId(baseColor);
-        }
 
-        // Calculate openness
+        // Get the actual DyeColor for top and bottom
+        DyeColor topDyeColor = getDyeColorFromId(colors.topColor(), baseColor);
+        DyeColor bottomDyeColor = getDyeColorFromId(colors.bottomColor(), baseColor);
+
+        // Use the actual vanilla colored textures instead of tinting
+        SpriteIdentifier topTexture = getShulkerTexture(topDyeColor);
+        SpriteIdentifier bottomTexture = getShulkerTexture(bottomDyeColor);
+
         float animationProgress = shulkerBox.getAnimationProgress(tickDelta);
 
         matrices.push();
-
-        // Position the model
         matrices.translate(0.5, 0.5, 0.5);
         matrices.scale(0.9995F, 0.9995F, 0.9995F);
-
-        // Apply rotation based on facing
         matrices.multiply(direction.getRotationQuaternion());
         matrices.scale(1.0F, -1.0F, -1.0F);
         matrices.translate(0.0, -1.0, 0.0);
 
-        // Animate the lid
         this.model.animateLid(animationProgress);
 
-        // Get model parts - lid is a direct field, base is accessed from root
         ModelPart lidPart = this.model.lid;
         ModelPart rootPart = this.model.root;
 
-        // Get the render layer
-        VertexConsumer vertexConsumer = spriteIdentifier.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
+        // Get vertex consumers for each colored texture
+        VertexConsumer topVertexConsumer = topTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
+        VertexConsumer bottomVertexConsumer = bottomTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
 
-        // Determine colors
-        int topColor = getColorInt(colors.topColor(), baseColor);
-        int bottomColor = getColorInt(colors.bottomColor(), baseColor);
-
-        // Try to get the base part from the root
-        // The shulker model structure typically has "base" and "lid" children
         ModelPart basePart = null;
         try {
             basePart = rootPart.getChild("base");
         } catch (Exception e) {
-            // Base part not found, we'll render differently
+            // Base part not found
         }
 
+        // Render with white tint (0xFFFFFFFF) since textures are already colored
         if (basePart != null) {
-            // Render base and lid separately with different colors
-            basePart.render(matrices, vertexConsumer, light, overlay, bottomColor);
-            lidPart.render(matrices, vertexConsumer, light, overlay, topColor);
+            basePart.render(matrices, bottomVertexConsumer, light, overlay, 0xFFFFFFFF);
+            lidPart.render(matrices, topVertexConsumer, light, overlay, 0xFFFFFFFF);
         } else {
-            // Fallback: If we can't separate the parts, render the whole model
-            // with a blended approach - render root with bottom color, then lid with top color
-            // First, hide the lid, render the root with bottom color
             boolean lidVisible = lidPart.visible;
             lidPart.visible = false;
-            rootPart.render(matrices, vertexConsumer, light, overlay, bottomColor);
+            rootPart.render(matrices, bottomVertexConsumer, light, overlay, 0xFFFFFFFF);
             lidPart.visible = lidVisible;
-
-            // Then render just the lid with top color
-            lidPart.render(matrices, vertexConsumer, light, overlay, topColor);
+            lidPart.render(matrices, topVertexConsumer, light, overlay, 0xFFFFFFFF);
         }
 
         matrices.pop();
     }
 
-    private int getColorInt(int colorId, DyeColor fallbackColor) {
+    private DyeColor getDyeColorFromId(int colorId, DyeColor fallbackColor) {
         if (colorId == -1) {
-            // Use the original shulker box color
-            if (fallbackColor == null) {
-                return 0xFFFFFFFF; // White for default/undyed shulker
-            }
-            return getDyeColorRgb(fallbackColor);
+            return fallbackColor; // Can be null for undyed shulker
         }
-        // Convert dye color ID to RGB
-        DyeColor dyeColor = DyeColor.byId(colorId);
-        return getDyeColorRgb(dyeColor);
+        return DyeColor.byId(colorId);
     }
 
-    private int getDyeColorRgb(DyeColor dyeColor) {
-        // Get the color components and create ARGB int
-        // DyeColor.getEntityColor() returns the RGB int for entity tinting
-        int rgb = dyeColor.getEntityColor();
-        // Add full alpha
-        return 0xFF000000 | rgb;
+    private SpriteIdentifier getShulkerTexture(DyeColor color) {
+        if (color == null) {
+            // Undyed shulker box
+            return TexturedRenderLayers.SHULKER_TEXTURE_ID;
+        }
+        // Use the colored shulker texture list indexed by color ID
+        return TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.getId());
     }
 }

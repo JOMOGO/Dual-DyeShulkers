@@ -21,6 +21,7 @@
 		]
 	},
 	"mixins": [
+		"multicolor-shulkers.mixins.json",
 		{
 			"config": "multicolor-shulkers.client.mixins.json",
 			"environment": "client"

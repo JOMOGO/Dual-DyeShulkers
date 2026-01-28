@@ -3,6 +3,7 @@ package com.multicolorshulkers;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentRegistry;
 import net.fabricmc.fabric.api.attachment.v1.AttachmentType;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerBlockEntityEvents;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -56,6 +57,23 @@ public class MultiColorShulkers implements ModInitializer {
 		// Register the sync packet
 		PayloadTypeRegistry.playS2C().register(ColorSyncPayload.ID, ColorSyncPayload.CODEC);
 
+		// Sync colors when a shulker box block entity is loaded (e.g., placed from item, chunk load)
+		ServerBlockEntityEvents.BLOCK_ENTITY_LOAD.register((blockEntity, world) -> {
+			if (!(world instanceof ServerWorld serverWorld)) return;
+			if (!(blockEntity instanceof ShulkerBoxBlockEntity shulkerBox)) return;
+
+			ShulkerColors colors = shulkerBox.getAttached(SHULKER_COLORS);
+			if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) return;
+
+			// Schedule sync for next tick to avoid issues during world load
+			BlockPos pos = shulkerBox.getPos();
+			serverWorld.getServer().execute(() -> {
+				if (serverWorld.getPlayers().isEmpty()) return;
+				if (!(serverWorld.getBlockEntity(pos) instanceof ShulkerBoxBlockEntity)) return;
+				syncColorsToClients(serverWorld, pos, colors);
+			});
+		});
+
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
 			// Only process on server side
 			if (world.isClient()) {
@@ -87,6 +105,8 @@ public class MultiColorShulkers implements ModInitializer {
 
 			// Get current colors or create default
 			ShulkerColors currentColors = shulkerBox.getAttachedOrCreate(SHULKER_COLORS, () -> ShulkerColors.DEFAULT);
+			LOGGER.info("[DYE] Current colors before applying: top={}, bottom={}",
+				currentColors.topColor(), currentColors.bottomColor());
 			ShulkerColors newColors;
 
 			if (player.isSneaking()) {
@@ -121,6 +141,7 @@ public class MultiColorShulkers implements ModInitializer {
 			return ActionResult.SUCCESS;
 		});
 	}
+
 
 	private void syncColorsToClients(ServerWorld world, BlockPos pos, ShulkerColors colors) {
 		ColorSyncPayload payload = new ColorSyncPayload(pos, colors.topColor(), colors.bottomColor());
