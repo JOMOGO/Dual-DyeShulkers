@@ -76,8 +76,79 @@ public class MultiColorShulkers implements ModInitializer {
 	public void onInitialize() {
 		LOGGER.info("Dual-Dye Shulkers initialized!");
 
-		// Register the sync packet
+		// Register packets
 		PayloadTypeRegistry.playS2C().register(ColorSyncPayload.ID, ColorSyncPayload.CODEC);
+		PayloadTypeRegistry.playC2S().register(DyeRequestPayload.ID, DyeRequestPayload.CODEC);
+
+		// Handle dye request from client
+		ServerPlayNetworking.registerGlobalReceiver(DyeRequestPayload.ID, (payload, context) -> {
+			ServerPlayerEntity player = context.player();
+			ServerWorld world = player.getServerWorld();
+			BlockPos pos = payload.pos();
+			boolean colorBottom = payload.colorBottom();
+
+			// Verify player is close enough to the block
+			if (!player.getBlockPos().isWithinDistance(pos, 6)) {
+				return;
+			}
+
+			// Verify block is a shulker box
+			if (!(world.getBlockState(pos).getBlock() instanceof ShulkerBoxBlock)) {
+				return;
+			}
+
+			if (!(world.getBlockEntity(pos) instanceof ShulkerBoxBlockEntity shulkerBox)) {
+				return;
+			}
+
+			// Get the dye from player's hand
+			ItemStack mainHand = player.getMainHandStack();
+			ItemStack offHand = player.getOffHandStack();
+			ItemStack heldItem = null;
+			net.minecraft.util.Hand hand = null;
+
+			if (mainHand.getItem() instanceof DyeItem) {
+				heldItem = mainHand;
+				hand = net.minecraft.util.Hand.MAIN_HAND;
+			} else if (offHand.getItem() instanceof DyeItem) {
+				heldItem = offHand;
+				hand = net.minecraft.util.Hand.OFF_HAND;
+			}
+
+			if (heldItem == null || !(heldItem.getItem() instanceof DyeItem dyeItem)) {
+				return;
+			}
+
+			int dyeColor = dyeItem.getColor().getId();
+
+			// Get current colors or create default
+			ShulkerColors currentColors = shulkerBox.getAttachedOrCreate(SHULKER_COLORS, () -> ShulkerColors.DEFAULT);
+			ShulkerColors newColors;
+
+			if (colorBottom) {
+				newColors = currentColors.withBottomColor(dyeColor);
+				LOGGER.debug("[DYE] Setting bottom color to {} ({})", dyeItem.getColor().getName(), dyeColor);
+			} else {
+				newColors = currentColors.withTopColor(dyeColor);
+				LOGGER.debug("[DYE] Setting top color to {} ({})", dyeItem.getColor().getName(), dyeColor);
+			}
+
+			// Set the new colors
+			shulkerBox.setAttached(SHULKER_COLORS, newColors);
+			shulkerBox.markDirty();
+
+			// Track and sync to all nearby players
+			getColoredShulkers(world.getRegistryKey()).add(pos);
+			syncColorsToClients(world, pos, newColors);
+
+			// Consume dye in survival
+			if (!player.getAbilities().creativeMode) {
+				heldItem.decrement(1);
+			}
+
+			// Swing arm
+			player.swingHand(hand, true);
+		});
 
 		// Register cauldron behavior to wash off custom colors from shulker box items
 		registerCauldronBehavior();
@@ -143,69 +214,9 @@ public class MultiColorShulkers implements ModInitializer {
 			PENDING_SYNCS.clear();
 		});
 
-		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-			// Only process on server side
-			if (world.isClient()) {
-				return ActionResult.PASS;
-			}
-
-			var blockPos = hitResult.getBlockPos();
-			var blockState = world.getBlockState(blockPos);
-			var block = blockState.getBlock();
-
-			// Check if it's a shulker box
-			if (!(block instanceof ShulkerBoxBlock)) {
-				return ActionResult.PASS;
-			}
-
-			ItemStack heldItem = player.getStackInHand(hand);
-
-			// Check if holding a dye
-			if (!(heldItem.getItem() instanceof DyeItem dyeItem)) {
-				return ActionResult.PASS;
-			}
-
-			var blockEntity = world.getBlockEntity(blockPos);
-			if (!(blockEntity instanceof ShulkerBoxBlockEntity shulkerBox)) {
-				return ActionResult.PASS;
-			}
-
-			int dyeColor = dyeItem.getColor().getId();
-
-			// Get current colors or create default
-			ShulkerColors currentColors = shulkerBox.getAttachedOrCreate(SHULKER_COLORS, () -> ShulkerColors.DEFAULT);
-			ShulkerColors newColors;
-
-			if (player.isSneaking()) {
-				newColors = currentColors.withBottomColor(dyeColor);
-				LOGGER.debug("[DYE] Setting bottom color to {} ({})", dyeItem.getColor().getName(), dyeColor);
-			} else {
-				newColors = currentColors.withTopColor(dyeColor);
-				LOGGER.debug("[DYE] Setting top color to {} ({})", dyeItem.getColor().getName(), dyeColor);
-			}
-
-			// Set the new colors
-			shulkerBox.setAttached(SHULKER_COLORS, newColors);
-			shulkerBox.markDirty();
-
-			// Track and sync to all nearby players
-			if (world instanceof ServerWorld serverWorld) {
-				getColoredShulkers(serverWorld.getRegistryKey()).add(blockPos);
-				syncColorsToClients(serverWorld, blockPos, newColors);
-			}
-
-			// Consume dye in survival
-			if (!player.getAbilities().creativeMode) {
-				heldItem.decrement(1);
-			}
-
-			// Swing arm
-			if (player instanceof ServerPlayerEntity serverPlayer) {
-				serverPlayer.swingHand(hand, true);
-			}
-
-			return ActionResult.SUCCESS;
-		});
+		// Note: The actual dye application is handled via DyeRequestPayload from client
+		// This callback now just returns PASS to let the client handle the interaction
+		// The client will check config settings and send the appropriate packet
 	}
 
 

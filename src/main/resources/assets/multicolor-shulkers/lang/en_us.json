@@ -1,0 +1,11 @@
+{
+	"config.dual-dye-shulkers.title": "Dual-Dye Shulkers Config",
+	"config.dual-dye-shulkers.category.general": "General",
+	"config.dual-dye-shulkers.category.controls": "Controls",
+	"config.dual-dye-shulkers.showTooltip": "Show Color Tooltip",
+	"config.dual-dye-shulkers.showTooltip.tooltip": "Show custom color information in shulker box item tooltips",
+	"config.dual-dye-shulkers.topCombo": "Dye Top (Lid)",
+	"config.dual-dye-shulkers.topCombo.tooltip": "Key combo to dye the top. Click and press two keys/buttons.",
+	"config.dual-dye-shulkers.bottomCombo": "Dye Bottom (Base)",
+	"config.dual-dye-shulkers.bottomCombo.tooltip": "Key combo to dye the bottom. Click and press two keys/buttons."
+}

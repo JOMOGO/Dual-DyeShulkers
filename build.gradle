@@ -13,6 +13,8 @@ base {
 
 repositories {
     mavenCentral()
+    maven { url "https://maven.shedaniel.me/" }
+    maven { url "https://maven.terraformersmc.com/" }
 }
 
 loom {
@@ -32,6 +34,12 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Config GUI (optional dependencies)
+    modApi("me.shedaniel.cloth:cloth-config-fabric:16.0.141") {
+        exclude(group: "net.fabricmc.fabric-api")
+    }
+    modApi "com.terraformersmc:modmenu:13.0.0"
 }
 
 processResources {
@@ -73,6 +81,8 @@ modrinth {
     loaders = ["fabric"]
     dependencies {
         required.project "fabric-api"
+        optional.project "cloth-config"
+        optional.project "modmenu"
     }
     syncBodyFrom = rootProject.file("README.md").text
 }
