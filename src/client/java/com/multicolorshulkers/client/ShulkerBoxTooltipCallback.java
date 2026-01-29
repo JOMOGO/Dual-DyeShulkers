@@ -16,6 +16,8 @@ import java.util.List;
 public class ShulkerBoxTooltipCallback {
 
 	public static void addTooltip(ItemStack stack, Item.TooltipContext context, TooltipType type, List<Text> tooltip) {
+		if (!ModConfig.get().showTooltip) return;
+
 		if (!(stack.getItem() instanceof BlockItem blockItem)) return;
 		if (!(blockItem.getBlock() instanceof ShulkerBoxBlock)) return;
 

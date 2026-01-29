@@ -1,12 +1,20 @@
 package com.multicolorshulkers.client;
 
 import com.multicolorshulkers.ColorSyncPayload;
+import com.multicolorshulkers.DyeRequestPayload;
 import com.multicolorshulkers.MultiColorShulkers;
 import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.minecraft.block.ShulkerBoxBlock;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.item.DyeItem;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.math.BlockPos;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,6 +41,9 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		// Load config
+		ModConfig.get();
+
 		// Register packet receiver
 		ClientPlayNetworking.registerGlobalReceiver(ColorSyncPayload.ID, (payload, context) -> {
 			BlockPos pos = payload.pos();
@@ -54,9 +65,78 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 
 		// Register tooltip callback
 		ItemTooltipCallback.EVENT.register(ShulkerBoxTooltipCallback::addTooltip);
+
+		// Register client-side use block handler for dyeing shulker boxes
+		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+			// Only process on client side
+			if (!world.isClient()) {
+				return ActionResult.PASS;
+			}
+
+			var blockPos = hitResult.getBlockPos();
+			var blockState = world.getBlockState(blockPos);
+
+			// Check if it's a shulker box
+			if (!(blockState.getBlock() instanceof ShulkerBoxBlock)) {
+				return ActionResult.PASS;
+			}
+
+			var heldItem = player.getStackInHand(hand);
+
+			// Check if holding a dye
+			if (!(heldItem.getItem() instanceof DyeItem)) {
+				return ActionResult.PASS;
+			}
+
+			// Check which binding is active to determine action
+			boolean topKeyPressed = isTopColorBindingActive();
+			boolean bottomKeyPressed = isBottomColorBindingActive();
+
+			// If neither key is pressed, let vanilla handle it (open shulker)
+			if (!topKeyPressed && !bottomKeyPressed) {
+				return ActionResult.PASS;
+			}
+
+			// If both pressed, prefer bottom (or could pass - user decision)
+			boolean colorBottom = bottomKeyPressed;
+
+			// Send packet to server
+			ClientPlayNetworking.send(new DyeRequestPayload(blockPos, colorBottom));
+
+			return ActionResult.SUCCESS;
+		});
 	}
 
 	public static ShulkerColors getColors(BlockPos pos) {
 		return COLOR_CACHE.get(pos);
+	}
+
+	/**
+	 * Check if the top color binding is currently active (both keys pressed).
+	 */
+	public static boolean isTopColorBindingActive() {
+		KeyCombo combo = ModConfig.get().getTopCombo();
+		return isKeyPressed(combo.getKey1()) && isKeyPressed(combo.getKey2());
+	}
+
+	/**
+	 * Check if the bottom color binding is currently active (both keys pressed).
+	 */
+	public static boolean isBottomColorBindingActive() {
+		KeyCombo combo = ModConfig.get().getBottomCombo();
+		return isKeyPressed(combo.getKey1()) && isKeyPressed(combo.getKey2());
+	}
+
+	private static boolean isKeyPressed(InputUtil.Key key) {
+		MinecraftClient client = MinecraftClient.getInstance();
+		if (client.getWindow() == null) return false;
+		long handle = client.getWindow().getHandle();
+
+		if (key.getCategory() == InputUtil.Type.KEYSYM) {
+			return InputUtil.isKeyPressed(handle, key.getCode());
+		} else if (key.getCategory() == InputUtil.Type.MOUSE) {
+			return GLFW.glfwGetMouseButton(handle, key.getCode()) == GLFW.GLFW_PRESS;
+		}
+		return false;
 	}
 }

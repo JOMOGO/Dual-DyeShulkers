@@ -18,6 +18,9 @@
 		],
 		"client": [
 			"com.multicolorshulkers.client.MultiColorShulkersClient"
+		],
+		"modmenu": [
+			"com.multicolorshulkers.client.ModMenuIntegration"
 		]
 	},
 	"mixins": [
@@ -33,5 +36,9 @@
 		"minecraft": "~${minecraft_version}",
 		"java": ">=21",
 		"fabric-api": "*"
+	},
+	"suggests": {
+		"cloth-config": "*",
+		"modmenu": "*"
 	}
 }

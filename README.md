@@ -7,9 +7,9 @@ A Fabric mod for Minecraft 1.21.4 that lets you apply different colors to the **
 ## Features
 
 - **Dual-color shulker boxes** - Apply one color to the lid, another to the base
-- **Simple controls**:
-  - Right-click with dye → colors the **top (lid)**
-  - Shift + right-click with dye → colors the **bottom (base)**
+- **Configurable controls** (default):
+  - Shift + right-click with dye → colors the **top (lid)**
+  - Ctrl + right-click with dye → colors the **bottom (base)**
 - **Works with all 16 dye colors** (256 combinations!)
 - **Colors persist** through break/place cycles
 - **Cauldron washing** - Remove custom colors with a water cauldron
@@ -19,15 +19,30 @@ A Fabric mod for Minecraft 1.21.4 that lets you apply different colors to the **
 ## Usage
 
 1. Place a shulker box
-2. Hold any dye and right-click the shulker to color the **lid**
-3. Hold any dye and shift+right-click to color the **base**
+2. Hold any dye and Shift+right-click the shulker to color the **lid**
+3. Hold any dye and Ctrl+right-click to color the **base**
 4. To remove colors, use a water cauldron on the shulker box item
+
+## Configuration
+
+Install [Cloth Config](https://modrinth.com/mod/cloth-config) and [Mod Menu](https://modrinth.com/mod/modmenu) for an in-game config screen.
+
+**Options:**
+- **Show Color Tooltip** - Toggle tooltip display on shulker items
+- **Dye Top (Lid)** - Customize key combo for coloring the top (default: Shift + Right Click)
+- **Dye Bottom (Base)** - Customize key combo for coloring the bottom (default: Ctrl + Right Click)
+
+Key combos can be any combination of two keys/mouse buttons.
 
 ## Requirements
 
 - Minecraft 1.21.4
 - Fabric Loader 0.16.0+
 - [Fabric API](https://modrinth.com/mod/fabric-api)
+
+**Optional:**
+- [Cloth Config](https://modrinth.com/mod/cloth-config) - For config screen
+- [Mod Menu](https://modrinth.com/mod/modmenu) - For config screen access
 
 ## Installation
 
