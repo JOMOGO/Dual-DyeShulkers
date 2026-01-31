@@ -36,6 +36,9 @@ public class ShulkerBoxBlockEntityRendererMixin {
     private void onRender(ShulkerBoxBlockEntity shulkerBox, float tickDelta, MatrixStack matrices,
                           VertexConsumerProvider vertexConsumers, int light, int overlay, CallbackInfo ci) {
         ShulkerColors colors = MultiColorShulkersClient.getColors(shulkerBox.getPos());
+        if (colors == null) {
+            colors = MultiColorShulkersClient.getItemColors();
+        }
 
         if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) {
             return;

@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.ShulkerBoxBlock;
+import net.minecraft.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.DyeItem;
@@ -65,6 +66,38 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 
 		// Register tooltip callback
 		ItemTooltipCallback.EVENT.register(ShulkerBoxTooltipCallback::addTooltip);
+
+        // Register custom item renderer for all shulker box items
+        net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.DynamicItemRenderer renderer = (stack, mode, matrices, vertexConsumers, light, overlay) -> {
+            ShulkerBoxBlockEntity blockEntity = new ShulkerBoxBlockEntity(BlockPos.ORIGIN, net.minecraft.block.Blocks.SHULKER_BOX.getDefaultState());
+            
+            // Set base color if it's a colored shulker box item
+            if (net.minecraft.block.Block.getBlockFromItem(stack.getItem()) instanceof ShulkerBoxBlock shulkerBlock) {
+                 blockEntity = new ShulkerBoxBlockEntity(BlockPos.ORIGIN, shulkerBlock.getDefaultState());
+            }
+
+            // Get custom colors
+            ShulkerColors colors = MultiColorShulkers.getColorsFromItemStack(stack);
+            setItemColors(colors);
+            
+            try {
+                MinecraftClient.getInstance().getBlockEntityRenderDispatcher().renderEntity(blockEntity, matrices, vertexConsumers, light, overlay);
+            } finally {
+                clearItemColors();
+            }
+        };
+
+        net.minecraft.item.Item[] shulkerItems = {
+            net.minecraft.item.Items.SHULKER_BOX,
+            net.minecraft.item.Items.WHITE_SHULKER_BOX, net.minecraft.item.Items.ORANGE_SHULKER_BOX, net.minecraft.item.Items.MAGENTA_SHULKER_BOX, net.minecraft.item.Items.LIGHT_BLUE_SHULKER_BOX,
+            net.minecraft.item.Items.YELLOW_SHULKER_BOX, net.minecraft.item.Items.LIME_SHULKER_BOX, net.minecraft.item.Items.PINK_SHULKER_BOX, net.minecraft.item.Items.GRAY_SHULKER_BOX,
+            net.minecraft.item.Items.LIGHT_GRAY_SHULKER_BOX, net.minecraft.item.Items.CYAN_SHULKER_BOX, net.minecraft.item.Items.PURPLE_SHULKER_BOX, net.minecraft.item.Items.BLUE_SHULKER_BOX,
+            net.minecraft.item.Items.BROWN_SHULKER_BOX, net.minecraft.item.Items.GREEN_SHULKER_BOX, net.minecraft.item.Items.RED_SHULKER_BOX, net.minecraft.item.Items.BLACK_SHULKER_BOX
+        };
+
+        for (net.minecraft.item.Item item : shulkerItems) {
+            net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item, renderer);
+        }
 
 		// Register client-side use block handler for dyeing shulker boxes
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
