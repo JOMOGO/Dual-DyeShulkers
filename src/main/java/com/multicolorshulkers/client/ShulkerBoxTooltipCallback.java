@@ -33,24 +33,24 @@ public class ShulkerBoxTooltipCallback {
 
 			if (topColor != -1) {
 				//? if MC: >= 12105 {
-				/*DyeColor dyeColor = DyeColor.byIndex(topColor);
+				DyeColor dyeColor = DyeColor.byIndex(topColor);
 				String colorName = formatColorName(dyeColor.asString());
-				*///?} else {
-				DyeColor dyeColor = DyeColor.byId(topColor);
+				//?} else {
+				/*DyeColor dyeColor = DyeColor.byId(topColor);
 				String colorName = formatColorName(dyeColor.getName());
-				//?}
+				*///?}
 				tooltip.add(Text.literal("  Top: ").formatted(Formatting.GRAY)
 						.append(Text.literal(colorName).formatted(getFormattingForDye(dyeColor))));
 			}
 
 			if (bottomColor != -1) {
 				//? if MC: >= 12105 {
-				/*DyeColor dyeColor = DyeColor.byIndex(bottomColor);
+				DyeColor dyeColor = DyeColor.byIndex(bottomColor);
 				String colorName = formatColorName(dyeColor.asString());
-				*///?} else {
-				DyeColor dyeColor = DyeColor.byId(bottomColor);
+				//?} else {
+				/*DyeColor dyeColor = DyeColor.byId(bottomColor);
 				String colorName = formatColorName(dyeColor.getName());
-				//?}
+				*///?}
 				tooltip.add(Text.literal("  Bottom: ").formatted(Formatting.GRAY)
 						.append(Text.literal(colorName).formatted(getFormattingForDye(dyeColor))));
 			}

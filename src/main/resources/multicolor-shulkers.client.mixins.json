@@ -9,7 +9,8 @@
 		"ShulkerBoxModelRendererMixin",
 		"SpecialItemModelMixin",
 		"BuiltinModelItemRendererMixin",
-		"ShulkerEntityModelAccessor"
+		"ShulkerEntityModelAccessor",
+		"LayerRenderStateMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

@@ -85,20 +85,20 @@ public class ShulkerBoxBlockMixin {
         // Get or create the fabric:attachments compound
         NbtCompound attachments;
         //? if MC: >=12105 {
-        /*if (nbt.contains("fabric:attachments")) {
+        if (nbt.contains("fabric:attachments")) {
              attachments = nbt.getCompoundOrEmpty("fabric:attachments");
         } else {
             attachments = new NbtCompound();
             nbt.put("fabric:attachments", attachments);
         }
-        *///?} else {
-        if (nbt.contains("fabric:attachments", NbtElement.COMPOUND_TYPE)) {
+        //?} else {
+        /*if (nbt.contains("fabric:attachments", NbtElement.COMPOUND_TYPE)) {
             attachments = nbt.getCompound("fabric:attachments");
         } else {
             attachments = new NbtCompound();
             nbt.put("fabric:attachments", attachments);
         }
-        //?}
+        *///?}
 
         // Add our colors
         NbtCompound colorsNbt = new NbtCompound();
@@ -111,7 +111,7 @@ public class ShulkerBoxBlockMixin {
     }
 
     //? if MC: >=12105 {
-    /*@Inject(method = "onStateReplaced", at = @At("HEAD"))
+    @Inject(method = "onStateReplaced", at = @At("HEAD"))
     private void onStateReplaced(BlockState state, net.minecraft.server.world.ServerWorld serverWorld, BlockPos pos, boolean moved, CallbackInfo ci) {
         BlockEntity blockEntity = serverWorld.getBlockEntity(pos);
         if (blockEntity instanceof ShulkerBoxBlockEntity shulkerBox) {
@@ -121,8 +121,8 @@ public class ShulkerBoxBlockMixin {
             }
         }
     }
-    *///?} else {
-    @Inject(method = "onStateReplaced", at = @At("HEAD"))
+    //?} else {
+    /*@Inject(method = "onStateReplaced", at = @At("HEAD"))
     private void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved, CallbackInfo ci) {
         if (state.isOf(newState.getBlock())) {
             return;
@@ -138,7 +138,7 @@ public class ShulkerBoxBlockMixin {
             }
         }
     }
-    //?}
+    *///?}
 
 
     @Redirect(method = "onBreak", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z"))

@@ -13,10 +13,10 @@ import net.minecraft.client.render.item.model.special.ShulkerBoxModelRenderer;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 //? if MC: >=12105 {
-/*import net.minecraft.item.ItemDisplayContext;
-*///?} else {
-import net.minecraft.item.ModelTransformationMode;
-//?}
+import net.minecraft.item.ItemDisplayContext;
+//?} else {
+/*import net.minecraft.item.ModelTransformationMode;
+*///?}
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.Direction;
 import org.spongepowered.asm.mixin.Final;
@@ -32,11 +32,15 @@ public class ShulkerBoxModelRendererMixin {
 
     @Shadow @Final private ShulkerBoxBlockEntityRenderer blockEntityRenderer;
     @Shadow @Final private float openness;
-    @Shadow @Final private Direction orientation;
+    //? if MC: >=12106 {
+    @Shadow @Final private Direction facing;
+    //?} else {
+    /*@Shadow @Final private Direction orientation;
+    *///?}
     @Shadow @Final private SpriteIdentifier textureId;
 
     //? if MC: >=12105 {
-    /*@Inject(method = "render(Lnet/minecraft/item/ItemDisplayContext;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
+    @Inject(method = "render(Lnet/minecraft/item/ItemDisplayContext;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
             at = @At("HEAD"), cancellable = true)
     private void onRender(ItemDisplayContext mode, MatrixStack matrices,
                           VertexConsumerProvider vertexConsumers, int light, int overlay,
@@ -47,8 +51,8 @@ public class ShulkerBoxModelRendererMixin {
         ci.cancel();
         renderWithDualColors(matrices, vertexConsumers, light, overlay, colors);
     }
-    *///?} else {
-    @Inject(method = "render(Lnet/minecraft/item/ModelTransformationMode;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
+    //?} else {
+    /*@Inject(method = "render(Lnet/minecraft/item/ModelTransformationMode;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
             at = @At("HEAD"), cancellable = true)
     private void onRender(ModelTransformationMode mode, MatrixStack matrices,
                           VertexConsumerProvider vertexConsumers, int light, int overlay,
@@ -59,7 +63,7 @@ public class ShulkerBoxModelRendererMixin {
         ci.cancel();
         renderWithDualColors(matrices, vertexConsumers, light, overlay, colors);
     }
-    //?}
+    *///?}
 
     @Unique
     private void renderWithDualColors(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, ShulkerColors colors) {
@@ -72,7 +76,11 @@ public class ShulkerBoxModelRendererMixin {
         matrices.push();
         matrices.translate(0.5f, 0.5f, 0.5f);
         matrices.scale(0.9995f, 0.9995f, 0.9995f);
-        matrices.multiply(this.orientation.getRotationQuaternion());
+        //? if MC: >=12106 {
+        matrices.multiply(this.facing.getRotationQuaternion());
+        //?} else {
+        /*matrices.multiply(this.orientation.getRotationQuaternion());
+        *///?}
         matrices.scale(1.0f, -1.0f, -1.0f);
         matrices.translate(0.0f, -1.0f, 0.0f);
 
@@ -80,10 +88,10 @@ public class ShulkerBoxModelRendererMixin {
         model.animateLid(this.openness);
         ModelPart lidPart = model.lid;
         //? if MC: >=12105 {
-        /*ModelPart rootPart = ((net.minecraft.client.model.Model) model).getRootPart();
-        *///?} else {
-        ModelPart rootPart = model.root;
-        //?}
+        ModelPart rootPart = ((net.minecraft.client.model.Model) model).getRootPart();
+        //?} else {
+        /*ModelPart rootPart = model.root;
+        *///?}
 
         VertexConsumer topVC = topTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
         VertexConsumer bottomVC = bottomTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
@@ -107,10 +115,10 @@ public class ShulkerBoxModelRendererMixin {
     @Unique private DyeColor getBaseColorFromTexture() {
         for (int i = 0; i < 16; i++) {
             //? if MC: >=12105 {
-            /*DyeColor color = DyeColor.byIndex(i);
-            *///?} else {
-            DyeColor color = DyeColor.byId(i);
-            //?}
+            DyeColor color = DyeColor.byIndex(i);
+            //?} else {
+            /*DyeColor color = DyeColor.byId(i);
+            *///?}
             if (TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(i).equals(this.textureId)) return color;
         }
         return null;
@@ -118,18 +126,18 @@ public class ShulkerBoxModelRendererMixin {
 
     @Unique private DyeColor getDyeColorFromId(int colorId, DyeColor fallback) {
         //? if MC: >=12105 {
-        /*return colorId == -1 ? fallback : DyeColor.byIndex(colorId);
-        *///?} else {
-        return colorId == -1 ? fallback : DyeColor.byId(colorId);
-        //?}
+        return colorId == -1 ? fallback : DyeColor.byIndex(colorId);
+        //?} else {
+        /*return colorId == -1 ? fallback : DyeColor.byId(colorId);
+        *///?}
     }
 
     @Unique private SpriteIdentifier getShulkerTexture(DyeColor color) {
         //? if MC: >=12105 {
-        /*return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.ordinal());
-        *///?} else {
-        return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.getId());
-        //?}
+        return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.ordinal());
+        //?} else {
+        /*return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.getId());
+        *///?}
     }
 }
 //?} else {

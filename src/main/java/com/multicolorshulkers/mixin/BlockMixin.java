@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 //? if MC: >=12105 {
-/*import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
-*///?}
+import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
+//?}
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Block.class)
@@ -32,10 +32,10 @@ public class BlockMixin {
                 if (blockEntity instanceof ShulkerBoxBlockEntity shulkerBox) {
                     // Ensure colors are set on the block entity
                     //? if MC: >=12105 {
-                    /*((AttachmentTarget)shulkerBox).setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
-                    *///?} else {
-                    shulkerBox.setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
-                    //?}
+                    ((AttachmentTarget)shulkerBox).setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
+                    //?} else {
+                    /*shulkerBox.setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
+                    *///?}
                     shulkerBox.markDirty();
 
                     if (world instanceof net.minecraft.server.world.ServerWorld serverWorld) {

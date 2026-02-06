@@ -21,6 +21,10 @@ accessible method net/minecraft/client/render/block/entity/ShulkerBoxBlockEntity
 # Access fields in ShulkerBoxModelRenderer for item rendering
 accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer blockEntityRenderer Lnet/minecraft/client/render/block/entity/ShulkerBoxBlockEntityRenderer;
 accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer openness F
-accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer orientation Lnet/minecraft/util/math/Direction;
+#? if MC: >=12106 {
+accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer facing Lnet/minecraft/util/math/Direction;
+#?} else {
+#accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer orientation Lnet/minecraft/util/math/Direction;
+#?}
 accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer textureId Lnet/minecraft/client/util/SpriteIdentifier;
 #?}

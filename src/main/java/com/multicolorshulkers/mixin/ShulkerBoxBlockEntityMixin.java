@@ -5,7 +5,11 @@ import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
 import net.minecraft.block.entity.ShulkerBoxBlockEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
-import net.minecraft.registry.RegistryWrapper;
+//? if MC: <12106 {
+/*import net.minecraft.registry.RegistryWrapper;
+*///?} else {
+import net.minecraft.storage.ReadView;
+//?}
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,9 +18,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ShulkerBoxBlockEntity.class)
 public class ShulkerBoxBlockEntityMixin {
 
-    @Inject(method = "readNbt", at = @At("TAIL"))
+    //? if MC: >=12106 {
+    @Inject(method = "readData", at = @At("TAIL"))
+    private void onReadData(ReadView view, CallbackInfo ci) {
+        ShulkerBoxBlockEntity self = (ShulkerBoxBlockEntity) (Object) this;
+    //?} else {
+    /*@Inject(method = "readNbt", at = @At("TAIL"))
     private void onReadNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
         ShulkerBoxBlockEntity self = (ShulkerBoxBlockEntity) (Object) this;
+    *///?}
 
         // Check if we already have valid colors via Fabric's attachment system
         ShulkerColors existing = self.getAttached(MultiColorShulkers.SHULKER_COLORS);
@@ -26,7 +36,18 @@ public class ShulkerBoxBlockEntityMixin {
 
         // Try to read colors from NBT - handles item-to-block-entity transfer
         // Fabric stores attachments under "fabric:attachments" key
-        //? if MC: >=12105 {
+        //? if MC: >=12106 {
+        ReadView attachmentsView = view.getReadView("fabric:attachments");
+        String key = MultiColorShulkers.MOD_ID + ":colors";
+        ReadView colorsView = attachmentsView.getReadView(key);
+        int topColor = colorsView.getInt("topColor", -1);
+        int bottomColor = colorsView.getInt("bottomColor", -1);
+        if (topColor != -1 || bottomColor != -1) {
+            ShulkerColors colors = new ShulkerColors(topColor, bottomColor);
+            self.setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
+            MultiColorShulkers.LOGGER.debug("[MIXIN] Restored colors from NBT: top={}, bottom={}", topColor, bottomColor);
+        }
+        //?} else if MC: >=12105 {
         /*if (nbt.contains("fabric:attachments")) {
             NbtCompound attachments = nbt.getCompoundOrEmpty("fabric:attachments");
             String key = MultiColorShulkers.MOD_ID + ":colors";
@@ -42,7 +63,7 @@ public class ShulkerBoxBlockEntityMixin {
             }
         }
         *///?} else {
-        if (nbt.contains("fabric:attachments", NbtElement.COMPOUND_TYPE)) {
+        /*if (nbt.contains("fabric:attachments", NbtElement.COMPOUND_TYPE)) {
             NbtCompound attachments = nbt.getCompound("fabric:attachments");
             String key = MultiColorShulkers.MOD_ID + ":colors";
             if (attachments.contains(key, NbtElement.COMPOUND_TYPE)) {
@@ -56,6 +77,6 @@ public class ShulkerBoxBlockEntityMixin {
                 }
             }
         }
-        //?}
+        *///?}
     }
 }
