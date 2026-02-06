@@ -4,6 +4,21 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      mc_version:
+        description: "Minecraft version to release"
+        required: true
+        type: choice
+        options:
+          - "all"
+          - "1.21.1"
+          - "1.21.4"
+          - "1.21.5"
+      tag:
+        description: "Tag name (e.g., v1.3.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -24,18 +39,68 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build
-        run: chmod +x gradlew && ./gradlew build
+      - name: Determine versions to build
+        id: versions
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ "${{ inputs.mc_version }}" = "all" ]; then
+              echo "versions=1.21.1 1.21.4 1.21.5" >> $GITHUB_OUTPUT
+            else
+              echo "versions=${{ inputs.mc_version }}" >> $GITHUB_OUTPUT
+            fi
+            echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "versions=1.21.1 1.21.4 1.21.5" >> $GITHUB_OUTPUT
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build selected versions
+        run: |
+          chmod +x gradlew
+          for version in ${{ steps.versions.outputs.versions }}; do
+            echo "Building for MC $version..."
+            ./gradlew ${version}:build
+          done
 
       - name: Publish to Modrinth
-        run: ./gradlew modrinth
+        run: |
+          for version in ${{ steps.versions.outputs.versions }}; do
+            echo "Publishing MC $version to Modrinth..."
+            ./gradlew ${version}:modrinth
+          done
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
 
-      - name: Create GitHub Release
+      - name: Collect JARs
+        run: |
+          mkdir -p release-jars
+          for version in ${{ steps.versions.outputs.versions }}; do
+            cp versions/$version/build/libs/*.jar release-jars/ 2>/dev/null || true
+          done
+          ls -la release-jars/
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view ${{ steps.versions.outputs.tag }} &>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Upload to existing release
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          gh release upload ${{ steps.versions.outputs.tag }} release-jars/*.jar --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create new GitHub Release
+        if: steps.check_release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            versions/1.21.1/build/libs/*.jar
-            versions/1.21.4/build/libs/*.jar
+          tag_name: ${{ steps.versions.outputs.tag }}
+          files: release-jars/*.jar
           generate_release_notes: true

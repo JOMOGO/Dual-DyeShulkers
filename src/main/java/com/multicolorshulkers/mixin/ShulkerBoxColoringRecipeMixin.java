@@ -19,7 +19,7 @@ public class ShulkerBoxColoringRecipeMixin {
 
     @Inject(method = "matches(Lnet/minecraft/recipe/input/CraftingRecipeInput;Lnet/minecraft/world/World;)Z", at = @At("HEAD"), cancellable = true)
     private void blockVanillaWhenDyeInTopOrBottom(CraftingRecipeInput input, World world, CallbackInfoReturnable<Boolean> cir) {
-        if (!com.multicolorshulkers.client.ModConfig.get().enableCrafting) return;
+        if (!com.multicolorshulkers.MultiColorShulkers.craftingEnabled) return;
 
         int width = input.getWidth();
         int height = input.getHeight();
@@ -83,7 +83,7 @@ public class ShulkerBoxColoringRecipeMixin {
 
     @Inject(method = "matches(Lnet/minecraft/recipe/input/CraftingRecipeInput;Lnet/minecraft/world/World;)Z", at = @At("HEAD"), cancellable = true)
     private void blockVanillaShulkerDye(CraftingRecipeInput input, World world, CallbackInfoReturnable<Boolean> cir) {
-        if (!com.multicolorshulkers.client.ModConfig.get().enableCrafting) return;
+        if (!com.multicolorshulkers.MultiColorShulkers.craftingEnabled) return;
 
         // TransmuteRecipe is used for shulker dyeing in 1.21.2+
         // We block it when the input is a shulker + dye combination

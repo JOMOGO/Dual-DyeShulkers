@@ -37,19 +37,12 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
 
     @Override
     public boolean matches(CraftingRecipeInput input, World world) {
-        MultiColorShulkers.LOGGER.debug("[RECIPE] matches() called - width={}, height={}, stackCount={}",
-            input.getWidth(), input.getHeight(), input.getStacks().size());
-        boolean result = matchesShared(input.getWidth(), input.getHeight(), input.getStacks());
-        MultiColorShulkers.LOGGER.debug("[RECIPE] matches() returning: {}", result);
-        return result;
+        return matchesShared(input.getWidth(), input.getHeight(), input.getStacks());
     }
 
     @Override
     public ItemStack craft(CraftingRecipeInput input, WrapperLookup registries) {
-        MultiColorShulkers.LOGGER.debug("[RECIPE] craft() called");
-        ItemStack result = craftShared(input.getWidth(), input.getHeight(), input.getStacks());
-        MultiColorShulkers.LOGGER.debug("[RECIPE] craft() returning: {}", result);
-        return result;
+        return craftShared(input.getWidth(), input.getHeight(), input.getStacks());
     }
 
     //?} else {
@@ -98,34 +91,26 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
     *///?}
 
     private boolean matchesShared(int width, int height, List<ItemStack> stacks) {
-        if (!com.multicolorshulkers.client.ModConfig.get().enableCrafting) return false;
+        if (!MultiColorShulkers.craftingEnabled) return false;
 
         ItemStack shulkerStack = ItemStack.EMPTY;
         int dyeCount = 0;
-
-        MultiColorShulkers.LOGGER.debug("[RECIPE] matchesShared called: width={}, height={}, stacks={}", width, height, stacks.size());
 
         for (ItemStack stack : stacks) {
             if (stack.isEmpty()) continue;
 
             if (Block.getBlockFromItem(stack.getItem()) instanceof ShulkerBoxBlock) {
                 if (!shulkerStack.isEmpty()) {
-                    MultiColorShulkers.LOGGER.debug("[RECIPE] Multiple shulkers found, returning false");
-                    return false;
+                    return false; // Multiple shulkers
                 }
                 shulkerStack = stack;
             } else if (stack.getItem() instanceof DyeItem) {
                 dyeCount++;
             } else {
-                MultiColorShulkers.LOGGER.debug("[RECIPE] Non-shulker/non-dye item found: {}, returning false", stack.getItem());
-                return false;
+                return false; // Non-shulker/non-dye item
             }
         }
-        boolean result = !shulkerStack.isEmpty() && dyeCount > 0;
-        if (result) {
-            MultiColorShulkers.LOGGER.info("[RECIPE] DualDyeShulkerRecipe MATCHED: shulker found, dyeCount={}", dyeCount);
-        }
-        return result;
+        return !shulkerStack.isEmpty() && dyeCount > 0;
     }
 
     private ItemStack craftShared(int width, int height, List<ItemStack> stacks) {
@@ -166,7 +151,11 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
                  if (stack.isEmpty() || !(stack.getItem() instanceof DyeItem dye)) continue;
 
                  int dyeRow = i / width;
+                 //? if MC: >= 12105 {
+                 /*int colorId = dye.getColor().ordinal();
+                 *///?} else {
                  int colorId = dye.getColor().getId();
+                 //?}
 
                  if (dyeRow == 0) {
                      newTopColor = colorId;
@@ -199,7 +188,11 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
                  if (stack.isEmpty() || !(stack.getItem() instanceof DyeItem dye)) continue;
 
                  int dyeRow = i / width;
+                 //? if MC: >= 12105 {
+                 /*int colorId = dye.getColor().ordinal();
+                 *///?} else {
                  int colorId = dye.getColor().getId();
+                 //?}
 
                  if (dyeRow < shulkerRow) {
                      newTopColor = colorId;
@@ -223,7 +216,11 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
 
          ItemStack resultStack;
          if (resolvedTop == resolvedBottom && resolvedTop != -1) {
+             //? if MC: >= 12105 {
+             /*Item shulkerItem = ShulkerBoxBlock.getItemStack(DyeColor.byIndex(resolvedTop)).getItem();
+             *///?} else {
              Item shulkerItem = ShulkerBoxBlock.getItemStack(DyeColor.byId(resolvedTop)).getItem();
+             //?}
              resultStack = new ItemStack(shulkerItem);
          } else {
              resultStack = shulkerStack.copy();
@@ -249,7 +246,12 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
             nbt.putString("id", "minecraft:shulker_box");
         }
 
+        //? if MC: >= 12105 {
+        /*var attachmentsOpt = nbt.getCompound("fabric:attachments");
+        NbtCompound attachments = attachmentsOpt.isPresent() ? attachmentsOpt.get() : new NbtCompound();
+        *///?} else {
         NbtCompound attachments = nbt.contains("fabric:attachments") ? nbt.getCompound("fabric:attachments") : new NbtCompound();
+        //?}
         NbtCompound colorNbt = new NbtCompound();
         colorNbt.putInt("topColor", colors.topColor());
         colorNbt.putInt("bottomColor", colors.bottomColor());
@@ -265,7 +267,12 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
          if (beData != null) {
               NbtCompound nbt = beData.copyNbt();
               if (nbt.contains("fabric:attachments")) {
+                  //? if MC: >= 12105 {
+                  /*var attachmentsOpt = nbt.getCompound("fabric:attachments"); // Optional
+                  NbtCompound attachments = attachmentsOpt.isPresent() ? attachmentsOpt.get() : new NbtCompound();
+                  *///?} else {
                   NbtCompound attachments = nbt.getCompound("fabric:attachments");
+                  //?}
                   attachments.remove(MultiColorShulkers.MOD_ID + ":colors");
                   if (attachments.isEmpty()) nbt.remove("fabric:attachments");
                   stack.set(DataComponentTypes.BLOCK_ENTITY_DATA, NbtComponent.of(nbt));
@@ -275,7 +282,11 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
 
     private int getBaseColor(ItemStack stack) {
         if (Block.getBlockFromItem(stack.getItem()) instanceof ShulkerBoxBlock shulkerBlock) {
+             //? if MC: >= 12105 {
+             /*if (shulkerBlock.getColor() != null) return shulkerBlock.getColor().ordinal();
+             *///?} else {
              if (shulkerBlock.getColor() != null) return shulkerBlock.getColor().getId();
+             //?}
         }
         return -1;
     }

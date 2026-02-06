@@ -12,7 +12,11 @@ import net.minecraft.client.render.item.model.special.SpecialModelRenderer;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
+//? if MC: >=12105 {
+/*import net.minecraft.item.ItemDisplayContext;
+*///?} else {
 import net.minecraft.item.ModelTransformationMode;
+//?}
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,6 +29,17 @@ public class SpecialItemModelMixin<T> {
 
     @Shadow @Final private SpecialModelRenderer<T> specialModelType;
 
+    //? if MC: >=12105 {
+    /*@Inject(method = "update", at = @At("HEAD"))
+    private void onUpdate(ItemRenderState renderState, ItemStack stack, ItemModelManager itemModelManager,
+                          ItemDisplayContext transformationMode, ClientWorld world,
+                          LivingEntity user, int seed, CallbackInfo ci) {
+        if (this.specialModelType instanceof ShulkerBoxModelRenderer) {
+            ShulkerColors colors = MultiColorShulkers.getColorsFromItemStack(stack);
+            MultiColorShulkersClient.setItemColors(colors);
+        }
+    }
+    *///?} else {
     @Inject(method = "update", at = @At("HEAD"))
     private void onUpdate(ItemRenderState renderState, ItemStack stack, ItemModelManager itemModelManager,
                           ModelTransformationMode transformationMode, ClientWorld world,
@@ -34,6 +49,7 @@ public class SpecialItemModelMixin<T> {
             MultiColorShulkersClient.setItemColors(colors);
         }
     }
+    //?}
 }
 //?} else {
 /*

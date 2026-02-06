@@ -50,6 +50,7 @@ public class ShulkerBoxBlockMixin {
         }
 
         // Get the colors from the block entity
+        // Get the colors from the block entity
         ShulkerColors colors = shulkerBox.getAttached(MultiColorShulkers.SHULKER_COLORS);
         if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) {
             return;
@@ -83,12 +84,21 @@ public class ShulkerBoxBlockMixin {
 
         // Get or create the fabric:attachments compound
         NbtCompound attachments;
+        //? if MC: >=12105 {
+        /*if (nbt.contains("fabric:attachments")) {
+             attachments = nbt.getCompoundOrEmpty("fabric:attachments");
+        } else {
+            attachments = new NbtCompound();
+            nbt.put("fabric:attachments", attachments);
+        }
+        *///?} else {
         if (nbt.contains("fabric:attachments", NbtElement.COMPOUND_TYPE)) {
             attachments = nbt.getCompound("fabric:attachments");
         } else {
             attachments = new NbtCompound();
             nbt.put("fabric:attachments", attachments);
         }
+        //?}
 
         // Add our colors
         NbtCompound colorsNbt = new NbtCompound();
@@ -100,6 +110,18 @@ public class ShulkerBoxBlockMixin {
         stack.set(DataComponentTypes.BLOCK_ENTITY_DATA, NbtComponent.of(nbt));
     }
 
+    //? if MC: >=12105 {
+    /*@Inject(method = "onStateReplaced", at = @At("HEAD"))
+    private void onStateReplaced(BlockState state, net.minecraft.server.world.ServerWorld serverWorld, BlockPos pos, boolean moved, CallbackInfo ci) {
+        BlockEntity blockEntity = serverWorld.getBlockEntity(pos);
+        if (blockEntity instanceof ShulkerBoxBlockEntity shulkerBox) {
+            ShulkerColors colors = shulkerBox.getAttached(MultiColorShulkers.SHULKER_COLORS);
+            if (colors != null && (colors.topColor() != -1 || colors.bottomColor() != -1)) {
+                 MultiColorShulkers.clearColors(serverWorld, pos);
+            }
+        }
+    }
+    *///?} else {
     @Inject(method = "onStateReplaced", at = @At("HEAD"))
     private void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved, CallbackInfo ci) {
         if (state.isOf(newState.getBlock())) {
@@ -115,7 +137,8 @@ public class ShulkerBoxBlockMixin {
                 }
             }
         }
-        }
+    }
+    //?}
 
 
     @Redirect(method = "onBreak", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;spawnEntity(Lnet/minecraft/entity/Entity;)Z"))

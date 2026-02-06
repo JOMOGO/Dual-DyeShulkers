@@ -13,6 +13,11 @@ accessible field net/minecraft/client/render/block/entity/ShulkerBoxBlockEntityR
 # Access the root field in Model (parent class of ShulkerBoxBlockModel)
 accessible field net/minecraft/client/model/Model root Lnet/minecraft/client/model/ModelPart;
 
+# Access animateLid method in ShulkerBoxBlockModel
+accessible method net/minecraft/client/render/block/entity/ShulkerBoxBlockEntityRenderer$ShulkerBoxBlockModel animateLid (F)V
+#?}
+
+#? if MC: >=12102 {
 # Access fields in ShulkerBoxModelRenderer for item rendering
 accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer blockEntityRenderer Lnet/minecraft/client/render/block/entity/ShulkerBoxBlockEntityRenderer;
 accessible field net/minecraft/client/render/item/model/special/ShulkerBoxModelRenderer openness F

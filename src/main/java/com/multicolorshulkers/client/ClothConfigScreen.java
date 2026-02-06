@@ -38,7 +38,10 @@ public class ClothConfigScreen {
 						config.enableCrafting)
 				.setDefaultValue(true)
 				.setTooltip(Text.translatable("config.dual-dye-shulkers.enableCrafting.tooltip"))
-				.setSaveConsumer(value -> config.enableCrafting = value)
+				.setSaveConsumer(value -> {
+					config.enableCrafting = value;
+					com.multicolorshulkers.MultiColorShulkers.craftingEnabled = value;
+				})
 				.build());
 
 		general.addEntry(entryBuilder.startBooleanToggle(

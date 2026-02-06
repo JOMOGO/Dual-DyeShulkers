@@ -12,7 +12,11 @@ import net.minecraft.client.render.block.entity.ShulkerBoxBlockEntityRenderer;
 import net.minecraft.client.render.item.model.special.ShulkerBoxModelRenderer;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
+//? if MC: >=12105 {
+/*import net.minecraft.item.ItemDisplayContext;
+*///?} else {
 import net.minecraft.item.ModelTransformationMode;
+//?}
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.math.Direction;
 import org.spongepowered.asm.mixin.Final;
@@ -31,6 +35,19 @@ public class ShulkerBoxModelRendererMixin {
     @Shadow @Final private Direction orientation;
     @Shadow @Final private SpriteIdentifier textureId;
 
+    //? if MC: >=12105 {
+    /*@Inject(method = "render(Lnet/minecraft/item/ItemDisplayContext;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
+            at = @At("HEAD"), cancellable = true)
+    private void onRender(ItemDisplayContext mode, MatrixStack matrices,
+                          VertexConsumerProvider vertexConsumers, int light, int overlay,
+                          boolean useGlint, CallbackInfo ci) {
+        ShulkerColors colors = MultiColorShulkersClient.getItemColors();
+        MultiColorShulkersClient.clearItemColors();
+        if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) return;
+        ci.cancel();
+        renderWithDualColors(matrices, vertexConsumers, light, overlay, colors);
+    }
+    *///?} else {
     @Inject(method = "render(Lnet/minecraft/item/ModelTransformationMode;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
             at = @At("HEAD"), cancellable = true)
     private void onRender(ModelTransformationMode mode, MatrixStack matrices,
@@ -42,6 +59,7 @@ public class ShulkerBoxModelRendererMixin {
         ci.cancel();
         renderWithDualColors(matrices, vertexConsumers, light, overlay, colors);
     }
+    //?}
 
     @Unique
     private void renderWithDualColors(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, ShulkerColors colors) {
@@ -61,7 +79,11 @@ public class ShulkerBoxModelRendererMixin {
         ShulkerBoxBlockEntityRenderer.ShulkerBoxBlockModel model = this.blockEntityRenderer.model;
         model.animateLid(this.openness);
         ModelPart lidPart = model.lid;
+        //? if MC: >=12105 {
+        /*ModelPart rootPart = ((net.minecraft.client.model.Model) model).getRootPart();
+        *///?} else {
         ModelPart rootPart = model.root;
+        //?}
 
         VertexConsumer topVC = topTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
         VertexConsumer bottomVC = bottomTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
@@ -84,18 +106,30 @@ public class ShulkerBoxModelRendererMixin {
 
     @Unique private DyeColor getBaseColorFromTexture() {
         for (int i = 0; i < 16; i++) {
+            //? if MC: >=12105 {
+            /*DyeColor color = DyeColor.byIndex(i);
+            *///?} else {
             DyeColor color = DyeColor.byId(i);
+            //?}
             if (TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(i).equals(this.textureId)) return color;
         }
         return null;
     }
 
     @Unique private DyeColor getDyeColorFromId(int colorId, DyeColor fallback) {
+        //? if MC: >=12105 {
+        /*return colorId == -1 ? fallback : DyeColor.byIndex(colorId);
+        *///?} else {
         return colorId == -1 ? fallback : DyeColor.byId(colorId);
+        //?}
     }
 
     @Unique private SpriteIdentifier getShulkerTexture(DyeColor color) {
+        //? if MC: >=12105 {
+        /*return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.ordinal());
+        *///?} else {
         return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.getId());
+        //?}
     }
 }
 //?} else {

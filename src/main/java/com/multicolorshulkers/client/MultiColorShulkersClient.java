@@ -41,8 +41,9 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		// Load config
-		ModConfig.get();
+		// Load config and sync to common code
+		ModConfig config = ModConfig.get();
+		MultiColorShulkers.craftingEnabled = config.enableCrafting;
 
 		// Register packet receiver
 		ClientPlayNetworking.registerGlobalReceiver(ColorSyncPayload.ID, (payload, context) -> {

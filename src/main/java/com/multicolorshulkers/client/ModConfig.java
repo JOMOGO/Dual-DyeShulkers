@@ -39,7 +39,7 @@ public class ModConfig {
 				String json = Files.readString(CONFIG_PATH);
 				ModConfig config = GSON.fromJson(json, ModConfig.class);
 				if (config != null) {
-					MultiColorShulkers.LOGGER.info("Loaded config from {}", CONFIG_PATH);
+					MultiColorShulkers.LOGGER.debug("Loaded config from {}", CONFIG_PATH);
 					return config;
 				}
 			} catch (IOException e) {
@@ -55,7 +55,7 @@ public class ModConfig {
 		try {
 			Files.createDirectories(CONFIG_PATH.getParent());
 			Files.writeString(CONFIG_PATH, GSON.toJson(this));
-			MultiColorShulkers.LOGGER.info("Saved config to {}", CONFIG_PATH);
+			MultiColorShulkers.LOGGER.debug("Saved config to {}", CONFIG_PATH);
 		} catch (IOException e) {
 			MultiColorShulkers.LOGGER.error("Failed to save config", e);
 		}

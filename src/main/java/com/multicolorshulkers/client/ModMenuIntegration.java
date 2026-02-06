@@ -13,7 +13,7 @@ public class ModMenuIntegration implements ModMenuApi {
 		boolean clothConfigPresent = FabricLoader.getInstance().isModLoaded("cloth-config")
 				|| FabricLoader.getInstance().isModLoaded("cloth-config2");
 
-		MultiColorShulkers.LOGGER.info("[ModMenu] Cloth Config present: {}", clothConfigPresent);
+		MultiColorShulkers.LOGGER.debug("[ModMenu] Cloth Config present: {}", clothConfigPresent);
 
 		if (clothConfigPresent) {
 			// Use a separate class to avoid loading Cloth Config classes when not present

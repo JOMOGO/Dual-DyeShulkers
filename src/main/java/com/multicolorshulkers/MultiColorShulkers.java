@@ -41,6 +41,9 @@ public class MultiColorShulkers implements ModInitializer {
 	public static final String MOD_ID = "multicolor-shulkers";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	// Config value accessible from common code (set by client, defaults to true for dedicated servers)
+	public static boolean craftingEnabled = true;
+
 	public record ShulkerColors(int topColor, int bottomColor) {
 		public static final Codec<ShulkerColors> CODEC = RecordCodecBuilder.create(instance ->
 			instance.group(
@@ -84,9 +87,18 @@ public class MultiColorShulkers implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		LOGGER.info("Dual-Dye Shulkers initialized!");
-		LOGGER.info("Registering recipe serializer: {}:dual_dye", MOD_ID);
+
+		// Load config and sync craftingEnabled (works on both client and dedicated server)
+		try {
+			com.multicolorshulkers.client.ModConfig config = com.multicolorshulkers.client.ModConfig.get();
+			craftingEnabled = config.enableCrafting;
+		} catch (Exception e) {
+			LOGGER.warn("Could not load config, using defaults: {}", e.getMessage());
+			craftingEnabled = true;
+		}
+
+		LOGGER.debug("Registering recipe serializer: {}:dual_dye", MOD_ID);
 		net.minecraft.registry.Registry.register(net.minecraft.registry.Registries.RECIPE_SERIALIZER, Identifier.of(MOD_ID, "dual_dye"), DUAL_DYE_SERIALIZER);
-		LOGGER.info("Recipe serializer registered successfully");
 
 		// Register packets
 		PayloadTypeRegistry.playS2C().register(ColorSyncPayload.ID, ColorSyncPayload.CODEC);
@@ -131,7 +143,11 @@ public class MultiColorShulkers implements ModInitializer {
 				return;
 			}
 
+			//? if MC: >=12105 {
+			/*int dyeColor = dyeItem.getColor().ordinal();
+			*///?} else {
 			int dyeColor = dyeItem.getColor().getId();
+			//?}
 
 			// Get current colors or create default
 			ShulkerColors currentColors = shulkerBox.getAttachedOrCreate(SHULKER_COLORS, () -> ShulkerColors.DEFAULT);
@@ -139,10 +155,18 @@ public class MultiColorShulkers implements ModInitializer {
 
 			if (colorBottom) {
 				newColors = currentColors.withBottomColor(dyeColor);
+				//? if MC: >=12105 {
+				/*LOGGER.debug("[DYE] Setting bottom color to {} ({})", dyeItem.getColor().asString(), dyeColor);
+				*///?} else {
 				LOGGER.debug("[DYE] Setting bottom color to {} ({})", dyeItem.getColor().getName(), dyeColor);
+				//?}
 			} else {
 				newColors = currentColors.withTopColor(dyeColor);
+				//? if MC: >=12105 {
+				/*LOGGER.debug("[DYE] Setting top color to {} ({})", dyeItem.getColor().asString(), dyeColor);
+				*///?} else {
 				LOGGER.debug("[DYE] Setting top color to {} ({})", dyeItem.getColor().getName(), dyeColor);
+				//?}
 			}
 
 			// Set the new colors
@@ -327,6 +351,25 @@ public class MultiColorShulkers implements ModInitializer {
 		var nbt = beData.copyNbt();
 		LOGGER.debug("[ITEM] Block entity NBT keys: {}", nbt.getKeys());
 
+		//? if MC: >=12105 {
+		/*if (!nbt.contains("fabric:attachments")) {
+			LOGGER.debug("[ITEM] No fabric:attachments in NBT");
+			return null;
+		}
+
+		var attachments = nbt.getCompoundOrEmpty("fabric:attachments");
+		LOGGER.debug("[ITEM] Attachments keys: {}", attachments.getKeys());
+
+		String key = MOD_ID + ":colors";
+		if (!attachments.contains(key)) {
+			LOGGER.debug("[ITEM] No {} key in attachments", key);
+			return null;
+		}
+
+		var colorsNbt = attachments.getCompoundOrEmpty(key);
+		int topColor = colorsNbt.getInt("topColor", -1);
+		int bottomColor = colorsNbt.getInt("bottomColor", -1);
+		*///?} else {
 		if (!nbt.contains("fabric:attachments", net.minecraft.nbt.NbtElement.COMPOUND_TYPE)) {
 			LOGGER.debug("[ITEM] No fabric:attachments in NBT");
 			return null;
@@ -344,6 +387,7 @@ public class MultiColorShulkers implements ModInitializer {
 		var colorsNbt = attachments.getCompound(key);
 		int topColor = colorsNbt.contains("topColor", net.minecraft.nbt.NbtElement.INT_TYPE) ? colorsNbt.getInt("topColor") : -1;
 		int bottomColor = colorsNbt.contains("bottomColor", net.minecraft.nbt.NbtElement.INT_TYPE) ? colorsNbt.getInt("bottomColor") : -1;
+		//?}
 
 		LOGGER.debug("[ITEM] Found colors: top={}, bottom={}", topColor, bottomColor);
 
@@ -359,9 +403,15 @@ public class MultiColorShulkers implements ModInitializer {
 		if (beData == null) return;
 
 		var nbt = beData.copyNbt();
+		
+		//? if MC: >=12105 {
+		/*if (!nbt.contains("fabric:attachments")) return;
+		var attachments = nbt.getCompoundOrEmpty("fabric:attachments");
+		*///?} else {
 		if (!nbt.contains("fabric:attachments", net.minecraft.nbt.NbtElement.COMPOUND_TYPE)) return;
-
 		var attachments = nbt.getCompound("fabric:attachments");
+		//?}
+
 		String key = MOD_ID + ":colors";
 		if (attachments.contains(key)) {
 			attachments.remove(key);

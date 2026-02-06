@@ -26,6 +26,22 @@ public class ShulkerBoxBlockEntityMixin {
 
         // Try to read colors from NBT - handles item-to-block-entity transfer
         // Fabric stores attachments under "fabric:attachments" key
+        //? if MC: >=12105 {
+        /*if (nbt.contains("fabric:attachments")) {
+            NbtCompound attachments = nbt.getCompoundOrEmpty("fabric:attachments");
+            String key = MultiColorShulkers.MOD_ID + ":colors";
+            if (attachments.contains(key)) {
+                NbtCompound colorsNbt = attachments.getCompoundOrEmpty(key);
+                int topColor = colorsNbt.getInt("topColor", -1);
+                int bottomColor = colorsNbt.getInt("bottomColor", -1);
+                if (topColor != -1 || bottomColor != -1) {
+                    ShulkerColors colors = new ShulkerColors(topColor, bottomColor);
+                    self.setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
+                    MultiColorShulkers.LOGGER.debug("[MIXIN] Restored colors from NBT: top={}, bottom={}", topColor, bottomColor);
+                }
+            }
+        }
+        *///?} else {
         if (nbt.contains("fabric:attachments", NbtElement.COMPOUND_TYPE)) {
             NbtCompound attachments = nbt.getCompound("fabric:attachments");
             String key = MultiColorShulkers.MOD_ID + ":colors";
@@ -40,5 +56,6 @@ public class ShulkerBoxBlockEntityMixin {
                 }
             }
         }
+        //?}
     }
 }
