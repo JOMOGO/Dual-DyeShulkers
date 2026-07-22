@@ -8,8 +8,6 @@
 		"ShulkerBoxBlockEntityRendererMixin",
 		"ShulkerBoxModelRendererMixin",
 		"SpecialItemModelMixin",
-		"BuiltinModelItemRendererMixin",
-		"ShulkerEntityModelAccessor",
 		"LayerRenderStateMixin"
 	],
 	"injectors": {

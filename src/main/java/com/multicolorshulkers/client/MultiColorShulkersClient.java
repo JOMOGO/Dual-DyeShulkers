@@ -1,5 +1,7 @@
 package com.multicolorshulkers.client;
 
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.Window;
 import com.multicolorshulkers.ColorSyncPayload;
 import com.multicolorshulkers.DyeRequestPayload;
 import com.multicolorshulkers.MultiColorShulkers;
@@ -8,12 +10,11 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.DyeItem;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Map;
@@ -52,11 +53,9 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 			int bottomColor = payload.bottomColor();
 
 			if (topColor == -1 && bottomColor == -1) {
-				// Clear sync - remove from cache
 				COLOR_CACHE.remove(pos);
 				MultiColorShulkers.LOGGER.debug("[CLIENT] Cleared colors cache for {}", pos);
 			} else {
-				// Update cache with new colors
 				ShulkerColors colors = new ShulkerColors(topColor, bottomColor);
 				COLOR_CACHE.put(pos, colors);
 				MultiColorShulkers.LOGGER.debug("[CLIENT] Received colors for {}: top={}, bottom={}",
@@ -70,8 +69,8 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 		// Register client-side use block handler for dyeing shulker boxes
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
 			// Only process on client side
-			if (!world.isClient()) {
-				return ActionResult.PASS;
+			if (!world.isClientSide()) {
+				return InteractionResult.PASS;
 			}
 
 			var blockPos = hitResult.getBlockPos();
@@ -79,38 +78,37 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 
 			// Check if it's a shulker box
 			if (!(blockState.getBlock() instanceof ShulkerBoxBlock)) {
-				return ActionResult.PASS;
+				return InteractionResult.PASS;
 			}
 
-			var heldItem = player.getStackInHand(hand);
+			var heldItem = player.getItemInHand(hand);
 
 			// Check if holding a dye
 			if (!(heldItem.getItem() instanceof DyeItem)) {
-				return ActionResult.PASS;
+				return InteractionResult.PASS;
 			}
 
 			// Check which binding is active to determine action
-			if (!ModConfig.get().enableKeybinds) return ActionResult.PASS;
+			if (!ModConfig.get().enableKeybinds) return InteractionResult.PASS;
 			boolean topKeyPressed = isTopColorBindingActive();
 			boolean bottomKeyPressed = isBottomColorBindingActive();
 
 			// If neither key is pressed, let vanilla handle it (open shulker)
 			if (!topKeyPressed && !bottomKeyPressed) {
-				return ActionResult.PASS;
+				return InteractionResult.PASS;
 			}
 
-			// If both pressed, prefer bottom (or could pass - user decision)
+			// If both pressed, prefer bottom
 			boolean colorBottom = bottomKeyPressed;
 
 			// Send packet to server
 			ClientPlayNetworking.send(new DyeRequestPayload(blockPos, colorBottom));
 
 			// Swing hand visually
-			player.swingHand(hand);
+			player.swing(hand);
 
-			// Return FAIL to prevent the client from sending a standard "interact block" packet
-			// which would cause the shulker box to open on the server.
-			return ActionResult.FAIL;
+			// Return FAIL to prevent the client from opening the shulker box.
+			return InteractionResult.FAIL;
 		});
 	}
 
@@ -134,15 +132,15 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 		return isKeyPressed(combo.getKey1()) && isKeyPressed(combo.getKey2());
 	}
 
-	private static boolean isKeyPressed(InputUtil.Key key) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.getWindow() == null) return false;
-		long handle = client.getWindow().getHandle();
+	private static boolean isKeyPressed(InputConstants.Key key) {
+		Minecraft client = Minecraft.getInstance();
+		Window window = client.getWindow();
+		if (window == null) return false;
 
-		if (key.getCategory() == InputUtil.Type.KEYSYM) {
-			return InputUtil.isKeyPressed(handle, key.getCode());
-		} else if (key.getCategory() == InputUtil.Type.MOUSE) {
-			return GLFW.glfwGetMouseButton(handle, key.getCode()) == GLFW.GLFW_PRESS;
+		if (key.getType() == InputConstants.Type.KEYSYM) {
+			return InputConstants.isKeyDown(window, key.getValue());
+		} else if (key.getType() == InputConstants.Type.MOUSE) {
+			return GLFW.glfwGetMouseButton(window.handle(), key.getValue()) == GLFW.GLFW_PRESS;
 		}
 		return false;
 	}

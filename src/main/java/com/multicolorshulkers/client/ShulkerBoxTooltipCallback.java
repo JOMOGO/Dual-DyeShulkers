@@ -2,20 +2,20 @@ package com.multicolorshulkers.client;
 
 import com.multicolorshulkers.MultiColorShulkers;
 import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.DyeColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 
 import java.util.List;
 
 public class ShulkerBoxTooltipCallback {
 
-	public static void addTooltip(ItemStack stack, Item.TooltipContext context, TooltipType type, List<Text> tooltip) {
+	public static void addTooltip(ItemStack stack, Item.TooltipContext context, TooltipFlag type, List<Component> tooltip) {
 		if (!ModConfig.get().showTooltip) return;
 
 		if (!(stack.getItem() instanceof BlockItem blockItem)) return;
@@ -28,31 +28,21 @@ public class ShulkerBoxTooltipCallback {
 		int bottomColor = colors.bottomColor();
 
 		if (topColor != -1 || bottomColor != -1) {
-			tooltip.add(Text.empty());
-			tooltip.add(Text.literal("Custom Colors:").formatted(Formatting.GRAY, Formatting.ITALIC));
+			tooltip.add(Component.empty());
+			tooltip.add(Component.literal("Custom Colors:").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
 
 			if (topColor != -1) {
-				//? if MC: >= 12105 {
-				DyeColor dyeColor = DyeColor.byIndex(topColor);
-				String colorName = formatColorName(dyeColor.asString());
-				//?} else {
-				/*DyeColor dyeColor = DyeColor.byId(topColor);
-				String colorName = formatColorName(dyeColor.getName());
-				*///?}
-				tooltip.add(Text.literal("  Top: ").formatted(Formatting.GRAY)
-						.append(Text.literal(colorName).formatted(getFormattingForDye(dyeColor))));
+				DyeColor dyeColor = DyeColor.byId(topColor);
+				String colorName = formatColorName(dyeColor.getSerializedName());
+				tooltip.add(Component.literal("  Top: ").withStyle(ChatFormatting.GRAY)
+						.append(Component.literal(colorName).withStyle(getFormattingForDye(dyeColor))));
 			}
 
 			if (bottomColor != -1) {
-				//? if MC: >= 12105 {
-				DyeColor dyeColor = DyeColor.byIndex(bottomColor);
-				String colorName = formatColorName(dyeColor.asString());
-				//?} else {
-				/*DyeColor dyeColor = DyeColor.byId(bottomColor);
-				String colorName = formatColorName(dyeColor.getName());
-				*///?}
-				tooltip.add(Text.literal("  Bottom: ").formatted(Formatting.GRAY)
-						.append(Text.literal(colorName).formatted(getFormattingForDye(dyeColor))));
+				DyeColor dyeColor = DyeColor.byId(bottomColor);
+				String colorName = formatColorName(dyeColor.getSerializedName());
+				tooltip.add(Component.literal("  Bottom: ").withStyle(ChatFormatting.GRAY)
+						.append(Component.literal(colorName).withStyle(getFormattingForDye(dyeColor))));
 			}
 		}
 	}
@@ -70,23 +60,23 @@ public class ShulkerBoxTooltipCallback {
 		return result.toString().trim();
 	}
 
-	private static Formatting getFormattingForDye(DyeColor color) {
+	private static ChatFormatting getFormattingForDye(DyeColor color) {
 		return switch (color) {
-			case WHITE -> Formatting.WHITE;
-			case ORANGE -> Formatting.GOLD;
-			case MAGENTA, PINK -> Formatting.LIGHT_PURPLE;
-			case LIGHT_BLUE -> Formatting.AQUA;
-			case YELLOW -> Formatting.YELLOW;
-			case LIME -> Formatting.GREEN;
-			case GRAY -> Formatting.DARK_GRAY;
-			case LIGHT_GRAY -> Formatting.GRAY;
-			case CYAN -> Formatting.DARK_AQUA;
-			case PURPLE -> Formatting.DARK_PURPLE;
-			case BLUE -> Formatting.BLUE;
-			case BROWN -> Formatting.GOLD;
-			case GREEN -> Formatting.DARK_GREEN;
-			case RED -> Formatting.RED;
-			case BLACK -> Formatting.DARK_GRAY;
+			case WHITE -> ChatFormatting.WHITE;
+			case ORANGE -> ChatFormatting.GOLD;
+			case MAGENTA, PINK -> ChatFormatting.LIGHT_PURPLE;
+			case LIGHT_BLUE -> ChatFormatting.AQUA;
+			case YELLOW -> ChatFormatting.YELLOW;
+			case LIME -> ChatFormatting.GREEN;
+			case GRAY -> ChatFormatting.DARK_GRAY;
+			case LIGHT_GRAY -> ChatFormatting.GRAY;
+			case CYAN -> ChatFormatting.DARK_AQUA;
+			case PURPLE -> ChatFormatting.DARK_PURPLE;
+			case BLUE -> ChatFormatting.BLUE;
+			case BROWN -> ChatFormatting.GOLD;
+			case GREEN -> ChatFormatting.DARK_GREEN;
+			case RED -> ChatFormatting.RED;
+			case BLACK -> ChatFormatting.DARK_GRAY;
 		};
 	}
 }

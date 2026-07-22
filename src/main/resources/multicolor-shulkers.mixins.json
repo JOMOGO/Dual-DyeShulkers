@@ -7,7 +7,8 @@
 		"ShulkerBoxBlockEntityMixin",
 		"ShulkerBoxBlockMixin",
 		"BlockMixin",
-		"ShulkerBoxColoringRecipeMixin"
+		"ShulkerBoxColoringRecipeMixin",
+		"PickItemFromBlockMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

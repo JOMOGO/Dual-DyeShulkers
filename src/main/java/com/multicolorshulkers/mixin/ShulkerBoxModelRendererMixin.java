@@ -1,24 +1,18 @@
 package com.multicolorshulkers.mixin;
 
-//? if MC: >=12102 {
 import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
 import com.multicolorshulkers.client.MultiColorShulkersClient;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.TexturedRenderLayers;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.ShulkerBoxBlockEntityRenderer;
-import net.minecraft.client.render.item.model.special.ShulkerBoxModelRenderer;
-import net.minecraft.client.util.SpriteIdentifier;
-import net.minecraft.client.util.math.MatrixStack;
-//? if MC: >=12105 {
-import net.minecraft.item.ItemDisplayContext;
-//?} else {
-/*import net.minecraft.item.ModelTransformationMode;
-*///?}
-import net.minecraft.util.DyeColor;
-import net.minecraft.util.math.Direction;
+import com.multicolorshulkers.client.ShulkerLidModel;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.blockentity.ShulkerBoxRenderer;
+import net.minecraft.client.renderer.special.ShulkerBoxSpecialRenderer;
+import net.minecraft.client.resources.model.sprite.SpriteGetter;
+import net.minecraft.client.resources.model.sprite.SpriteId;
+import net.minecraft.world.item.DyeColor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,127 +21,55 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ShulkerBoxModelRenderer.class)
+@Mixin(ShulkerBoxSpecialRenderer.class)
 public class ShulkerBoxModelRendererMixin {
 
-    @Shadow @Final private ShulkerBoxBlockEntityRenderer blockEntityRenderer;
+    @Shadow @Final private ShulkerBoxRenderer shulkerBoxRenderer;
     @Shadow @Final private float openness;
-    //? if MC: >=12106 {
-    @Shadow @Final private Direction facing;
-    //?} else {
-    /*@Shadow @Final private Direction orientation;
-    *///?}
-    @Shadow @Final private SpriteIdentifier textureId;
-
-    //? if MC: >=12105 {
-    @Inject(method = "render(Lnet/minecraft/item/ItemDisplayContext;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
-            at = @At("HEAD"), cancellable = true)
-    private void onRender(ItemDisplayContext mode, MatrixStack matrices,
-                          VertexConsumerProvider vertexConsumers, int light, int overlay,
-                          boolean useGlint, CallbackInfo ci) {
-        ShulkerColors colors = MultiColorShulkersClient.getItemColors();
-        MultiColorShulkersClient.clearItemColors();
-        if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) return;
-        ci.cancel();
-        renderWithDualColors(matrices, vertexConsumers, light, overlay, colors);
-    }
-    //?} else {
-    /*@Inject(method = "render(Lnet/minecraft/item/ModelTransformationMode;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IIZ)V",
-            at = @At("HEAD"), cancellable = true)
-    private void onRender(ModelTransformationMode mode, MatrixStack matrices,
-                          VertexConsumerProvider vertexConsumers, int light, int overlay,
-                          boolean useGlint, CallbackInfo ci) {
-        ShulkerColors colors = MultiColorShulkersClient.getItemColors();
-        MultiColorShulkersClient.clearItemColors();
-        if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) return;
-        ci.cancel();
-        renderWithDualColors(matrices, vertexConsumers, light, overlay, colors);
-    }
-    *///?}
+    @Shadow @Final private SpriteId sprite;
 
     @Unique
-    private void renderWithDualColors(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, ShulkerColors colors) {
-        DyeColor baseColor = getBaseColorFromTexture();
-        DyeColor topDyeColor = getDyeColorFromId(colors.topColor(), baseColor);
-        DyeColor bottomDyeColor = getDyeColorFromId(colors.bottomColor(), baseColor);
-        SpriteIdentifier topTexture = getShulkerTexture(topDyeColor);
-        SpriteIdentifier bottomTexture = getShulkerTexture(bottomDyeColor);
+    private ShulkerLidModel multicolor$lidModel;
 
-        matrices.push();
-        matrices.translate(0.5f, 0.5f, 0.5f);
-        matrices.scale(0.9995f, 0.9995f, 0.9995f);
-        //? if MC: >=12106 {
-        matrices.multiply(this.facing.getRotationQuaternion());
-        //?} else {
-        /*matrices.multiply(this.orientation.getRotationQuaternion());
-        *///?}
-        matrices.scale(1.0f, -1.0f, -1.0f);
-        matrices.translate(0.0f, -1.0f, 0.0f);
+    @Inject(
+        method = "submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;IIZI)V",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private void onSubmit(PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay,
+                          boolean hasFoil, int outlineColor, CallbackInfo ci) {
+        ShulkerColors colors = MultiColorShulkersClient.getItemColors();
+        if (colors == null || (colors.topColor() == -1 && colors.bottomColor() == -1)) return;
+        ci.cancel();
+        renderWithDualColors(poseStack, collector, light, overlay, outlineColor, colors);
+    }
 
-        ShulkerBoxBlockEntityRenderer.ShulkerBoxBlockModel model = this.blockEntityRenderer.model;
-        model.animateLid(this.openness);
-        ModelPart lidPart = model.lid;
-        //? if MC: >=12105 {
-        ModelPart rootPart = ((net.minecraft.client.model.Model) model).getRootPart();
-        //?} else {
-        /*ModelPart rootPart = model.root;
-        *///?}
+    @Unique
+    private void renderWithDualColors(PoseStack poseStack, SubmitNodeCollector collector, int light, int overlay,
+                                      int outlineColor, ShulkerColors colors) {
+        SpriteId topSprite = colors.topColor() == -1 ? this.sprite : Sheets.getShulkerBoxSprite(DyeColor.byId(colors.topColor()));
+        SpriteId bottomSprite = colors.bottomColor() == -1 ? this.sprite : Sheets.getShulkerBoxSprite(DyeColor.byId(colors.bottomColor()));
 
-        VertexConsumer topVC = topTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
-        VertexConsumer bottomVC = bottomTexture.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutoutNoCull);
+        ShulkerBoxRenderer.ShulkerBoxModel model = this.shulkerBoxRenderer.model;
+        SpriteGetter sprites = this.shulkerBoxRenderer.sprites;
 
-        ModelPart basePart = null;
-        try { basePart = rootPart.getChild("base"); } catch (Exception e) {}
+        ModelPart root = model.root();
+        ModelPart basePart = root.getChild("base");
 
-        if (basePart != null) {
-            basePart.render(matrices, bottomVC, light, overlay, 0xFFFFFFFF);
-            lidPart.render(matrices, topVC, light, overlay, 0xFFFFFFFF);
-        } else {
-            boolean lidVisible = lidPart.visible;
-            lidPart.visible = false;
-            rootPart.render(matrices, bottomVC, light, overlay, 0xFFFFFFFF);
-            lidPart.visible = lidVisible;
-            lidPart.render(matrices, topVC, light, overlay, 0xFFFFFFFF);
+        // Base is static.
+        RenderType bottomRenderType = bottomSprite.renderType(model.renderType());
+        collector.submitModelPart(basePart, poseStack, bottomRenderType, light, overlay, sprites.get(bottomSprite), -1, null, outlineColor);
+
+        // Lid: submit as a stateful model at this item's openness so the shared lid pose is
+        // re-applied per instance (avoids leaking a placed shulker's animation onto item renders).
+        collector.submitModel(lidModel(root), this.openness, poseStack, light, overlay, -1, topSprite, sprites, outlineColor, null);
+    }
+
+    @Unique
+    private ShulkerLidModel lidModel(ModelPart root) {
+        if (this.multicolor$lidModel == null) {
+            this.multicolor$lidModel = new ShulkerLidModel(root.getChild("lid"));
         }
-        matrices.pop();
-    }
-
-    @Unique private DyeColor getBaseColorFromTexture() {
-        for (int i = 0; i < 16; i++) {
-            //? if MC: >=12105 {
-            DyeColor color = DyeColor.byIndex(i);
-            //?} else {
-            /*DyeColor color = DyeColor.byId(i);
-            *///?}
-            if (TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(i).equals(this.textureId)) return color;
-        }
-        return null;
-    }
-
-    @Unique private DyeColor getDyeColorFromId(int colorId, DyeColor fallback) {
-        //? if MC: >=12105 {
-        return colorId == -1 ? fallback : DyeColor.byIndex(colorId);
-        //?} else {
-        /*return colorId == -1 ? fallback : DyeColor.byId(colorId);
-        *///?}
-    }
-
-    @Unique private SpriteIdentifier getShulkerTexture(DyeColor color) {
-        //? if MC: >=12105 {
-        return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.ordinal());
-        //?} else {
-        /*return color == null ? TexturedRenderLayers.SHULKER_TEXTURE_ID : TexturedRenderLayers.COLORED_SHULKER_BOXES_TEXTURES.get(color.getId());
-        *///?}
+        return this.multicolor$lidModel;
     }
 }
-//?} else {
-/*
-import net.minecraft.client.render.item.ItemRenderer;
-import org.spongepowered.asm.mixin.Mixin;
-
-// Stub mixin for 1.21.1 - ShulkerBoxModelRenderer doesn't exist
-@Mixin(ItemRenderer.class)
-public class ShulkerBoxModelRendererMixin {
-    // No-op for 1.21.1 - item rendering handled by BuiltinModelItemRendererMixin
-}
-*///?}

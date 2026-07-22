@@ -1,26 +1,26 @@
 package com.multicolorshulkers;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
 
-public record ColorSyncPayload(BlockPos pos, int topColor, int bottomColor) implements CustomPayload {
+public record ColorSyncPayload(BlockPos pos, int topColor, int bottomColor) implements CustomPacketPayload {
 
-    public static final CustomPayload.Id<ColorSyncPayload> ID =
-        new CustomPayload.Id<>(Identifier.of(MultiColorShulkers.MOD_ID, "color_sync"));
+	public static final CustomPacketPayload.Type<ColorSyncPayload> ID =
+		new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MultiColorShulkers.MOD_ID, "color_sync"));
 
-    public static final PacketCodec<RegistryByteBuf, ColorSyncPayload> CODEC = PacketCodec.tuple(
-        BlockPos.PACKET_CODEC, ColorSyncPayload::pos,
-        PacketCodecs.INTEGER, ColorSyncPayload::topColor,
-        PacketCodecs.INTEGER, ColorSyncPayload::bottomColor,
-        ColorSyncPayload::new
-    );
+	public static final StreamCodec<RegistryFriendlyByteBuf, ColorSyncPayload> CODEC = StreamCodec.composite(
+		BlockPos.STREAM_CODEC, ColorSyncPayload::pos,
+		ByteBufCodecs.VAR_INT, ColorSyncPayload::topColor,
+		ByteBufCodecs.VAR_INT, ColorSyncPayload::bottomColor,
+		ColorSyncPayload::new
+	);
 
-    @Override
-    public Id<? extends CustomPayload> getId() {
-        return ID;
-    }
+	@Override
+	public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+		return ID;
+	}
 }

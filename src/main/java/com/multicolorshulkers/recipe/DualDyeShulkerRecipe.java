@@ -2,93 +2,50 @@ package com.multicolorshulkers.recipe;
 
 import com.multicolorshulkers.MultiColorShulkers;
 import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
-import net.minecraft.block.Block;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.item.DyeItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.SpecialCraftingRecipe;
-import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.registry.RegistryWrapper.WrapperLookup;
-import net.minecraft.world.World;
-import net.minecraft.util.DyeColor;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
 
-//? if MC: >=12100 {
-import net.minecraft.recipe.input.CraftingRecipeInput;
-//?} else {
-/*import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.registry.DynamicRegistryManager;
-*///?}
-
+import java.util.ArrayList;
 import java.util.List;
 
-public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
-    public DualDyeShulkerRecipe(CraftingRecipeCategory category) {
-        super(category);
-    }
+public class DualDyeShulkerRecipe extends CustomRecipe {
 
-    //? if MC: >=12100 {
-
-    @Override
-    public boolean matches(CraftingRecipeInput input, World world) {
-        return matchesShared(input.getWidth(), input.getHeight(), input.getStacks());
-    }
+    public static final DualDyeShulkerRecipe INSTANCE = new DualDyeShulkerRecipe();
+    public static final MapCodec<DualDyeShulkerRecipe> MAP_CODEC = MapCodec.unit(INSTANCE);
+    public static final StreamCodec<RegistryFriendlyByteBuf, DualDyeShulkerRecipe> STREAM_CODEC = StreamCodec.unit(INSTANCE);
+    public static final RecipeSerializer<DualDyeShulkerRecipe> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
 
     @Override
-    public ItemStack craft(CraftingRecipeInput input, WrapperLookup registries) {
-        return craftShared(input.getWidth(), input.getHeight(), input.getStacks());
+    public boolean matches(CraftingInput input, Level level) {
+        return matchesShared(input.width(), input.height(), toList(input));
     }
 
-    //?} else {
-
-    /*// Support both CraftingInventory and RecipeInputInventory for legacy (1.20.x)
-
-    public boolean matches(RecipeInputInventory input, World world) {
-        return matchesShared(input.getWidth(), input.getHeight(), toList(input));
+    @Override
+    public ItemStack assemble(CraftingInput input) {
+        return craftShared(input.width(), input.height(), toList(input));
     }
 
-    public boolean matches(CraftingInventory input, World world) {
-        return matchesShared(input.getWidth(), input.getHeight(), toList(input));
-    }
-
-    // craft might take WrapperLookup (1.20.5+) or DynamicRegistryManager (1.20.4-)
-    public ItemStack craft(RecipeInputInventory input, WrapperLookup registries) {
-        return craftShared(input.getWidth(), input.getHeight(), toList(input));
-    }
-
-    public ItemStack craft(CraftingInventory input, WrapperLookup registries) {
-        return craftShared(input.getWidth(), input.getHeight(), toList(input));
-    }
-
-    public ItemStack craft(RecipeInputInventory input, DynamicRegistryManager registryManager) {
-        return craftShared(input.getWidth(), input.getHeight(), toList(input));
-    }
-
-    public ItemStack craft(CraftingInventory input, DynamicRegistryManager registryManager) {
-        return craftShared(input.getWidth(), input.getHeight(), toList(input));
-    }
-
-    private List<ItemStack> toList(RecipeInputInventory inv) {
-        List<ItemStack> stacks = new java.util.ArrayList<>();
-        for(int i = 0; i < inv.size(); i++) {
-            stacks.add(inv.getStack(i));
+    private static List<ItemStack> toList(CraftingInput input) {
+        List<ItemStack> stacks = new ArrayList<>(input.size());
+        for (int i = 0; i < input.size(); i++) {
+            stacks.add(input.getItem(i));
         }
         return stacks;
     }
-    *///?}
-
-    //? if MC: <12102 {
-    /*@Override
-    public boolean fits(int width, int height) {
-        return width * height >= 2;
-    }
-    *///?}
 
     private boolean matchesShared(int width, int height, List<ItemStack> stacks) {
         if (!MultiColorShulkers.craftingEnabled) return false;
@@ -99,7 +56,7 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
         for (ItemStack stack : stacks) {
             if (stack.isEmpty()) continue;
 
-            if (Block.getBlockFromItem(stack.getItem()) instanceof ShulkerBoxBlock) {
+            if (Block.byItem(stack.getItem()) instanceof ShulkerBoxBlock) {
                 if (!shulkerStack.isEmpty()) {
                     return false; // Multiple shulkers
                 }
@@ -114,189 +71,152 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
     }
 
     private ItemStack craftShared(int width, int height, List<ItemStack> stacks) {
-         ItemStack shulkerStack = ItemStack.EMPTY;
-         for (ItemStack stack : stacks) {
-             if (!stack.isEmpty() && Block.getBlockFromItem(stack.getItem()) instanceof ShulkerBoxBlock) {
-                 shulkerStack = stack;
-                 break;
-             }
-         }
+        ItemStack shulkerStack = ItemStack.EMPTY;
+        for (ItemStack stack : stacks) {
+            if (!stack.isEmpty() && Block.byItem(stack.getItem()) instanceof ShulkerBoxBlock) {
+                shulkerStack = stack;
+                break;
+            }
+        }
 
-         if (shulkerStack.isEmpty()) return ItemStack.EMPTY;
+        if (shulkerStack.isEmpty()) return ItemStack.EMPTY;
 
-         ShulkerColors currentColors = MultiColorShulkers.getColorsFromItemStack(shulkerStack);
-         if (currentColors == null) currentColors = ShulkerColors.DEFAULT;
+        ShulkerColors currentColors = MultiColorShulkers.getColorsFromItemStack(shulkerStack);
+        if (currentColors == null) currentColors = ShulkerColors.DEFAULT;
 
-         int baseColorId = getBaseColor(shulkerStack);
-         int resolvedTop = currentColors.topColor();
-         int resolvedBottom = currentColors.bottomColor();
+        int baseColorId = getBaseColor(shulkerStack);
+        int resolvedTop = currentColors.topColor();
+        int resolvedBottom = currentColors.bottomColor();
 
-         if (resolvedTop == -1) resolvedTop = baseColorId;
-         if (resolvedBottom == -1) resolvedBottom = baseColorId;
+        if (resolvedTop == -1) resolvedTop = baseColorId;
+        if (resolvedBottom == -1) resolvedBottom = baseColorId;
 
-         int newTopColor = -1;
-         int newBottomColor = -1;
-         int vanillaColor = -1;
+        int newTopColor = -1;
+        int newBottomColor = -1;
+        int vanillaColor = -1;
 
-         int size = stacks.size();
+        int size = stacks.size();
 
-         if (height == 3) {
-             // CRAFTING TABLE MODE - items span all 3 rows
-             // Use absolute row positions - shulker position doesn't matter
-             //   Dye in row 0 (top) → colors top only
-             //   Dye in row 1 (middle) → colors whole box (vanilla)
-             //   Dye in row 2 (bottom) → colors bottom only
-             for (int i = 0; i < size; i++) {
-                 ItemStack stack = stacks.get(i);
-                 if (stack.isEmpty() || !(stack.getItem() instanceof DyeItem dye)) continue;
+        if (height == 3) {
+            // CRAFTING TABLE MODE - items span all 3 rows
+            for (int i = 0; i < size; i++) {
+                ItemStack stack = stacks.get(i);
+                if (stack.isEmpty() || !(stack.getItem() instanceof DyeItem)) continue;
 
-                 int dyeRow = i / width;
-                 //? if MC: >= 12105 {
-                 int colorId = dye.getColor().ordinal();
-                 //?} else {
-                 /*int colorId = dye.getColor().getId();
-                 *///?}
+                int dyeRow = i / width;
+                int colorId = colorIdOf(stack);
+                if (colorId == -1) continue;
 
-                 if (dyeRow == 0) {
-                     newTopColor = colorId;
-                 } else if (dyeRow == 2) {
-                     newBottomColor = colorId;
-                 } else {
-                     vanillaColor = colorId;
-                 }
-             }
-         } else {
-             // RELATIVE MODE - hand crafting (2x2) or crafting table when items don't span 3 rows
-             // Use position relative to shulker
-             //   Dye above shulker → colors top only
-             //   Dye below shulker → colors bottom only
-             //   Dye same row as shulker → colors whole box (vanilla)
+                if (dyeRow == 0) {
+                    newTopColor = colorId;
+                } else if (dyeRow == 2) {
+                    newBottomColor = colorId;
+                } else {
+                    vanillaColor = colorId;
+                }
+            }
+        } else {
+            // RELATIVE MODE - hand crafting (2x2) or crafting table when items don't span 3 rows
+            int shulkerRow = -1;
+            for (int i = 0; i < size; i++) {
+                ItemStack stack = stacks.get(i);
+                if (!stack.isEmpty() && Block.byItem(stack.getItem()) instanceof ShulkerBoxBlock) {
+                    shulkerRow = i / width;
+                    break;
+                }
+            }
 
-             // Find shulker row
-             int shulkerRow = -1;
-             for (int i = 0; i < size; i++) {
-                 ItemStack stack = stacks.get(i);
-                 if (!stack.isEmpty() && Block.getBlockFromItem(stack.getItem()) instanceof ShulkerBoxBlock) {
-                     shulkerRow = i / width;
-                     break;
-                 }
-             }
+            for (int i = 0; i < size; i++) {
+                ItemStack stack = stacks.get(i);
+                if (stack.isEmpty() || !(stack.getItem() instanceof DyeItem)) continue;
 
-             // Determine dye colors based on position relative to shulker
-             for (int i = 0; i < size; i++) {
-                 ItemStack stack = stacks.get(i);
-                 if (stack.isEmpty() || !(stack.getItem() instanceof DyeItem dye)) continue;
+                int dyeRow = i / width;
+                int colorId = colorIdOf(stack);
+                if (colorId == -1) continue;
 
-                 int dyeRow = i / width;
-                 //? if MC: >= 12105 {
-                 int colorId = dye.getColor().ordinal();
-                 //?} else {
-                 /*int colorId = dye.getColor().getId();
-                 *///?}
+                if (dyeRow < shulkerRow) {
+                    newTopColor = colorId;
+                } else if (dyeRow > shulkerRow) {
+                    newBottomColor = colorId;
+                } else {
+                    vanillaColor = colorId;
+                }
+            }
+        }
 
-                 if (dyeRow < shulkerRow) {
-                     newTopColor = colorId;
-                 } else if (dyeRow > shulkerRow) {
-                     newBottomColor = colorId;
-                 } else {
-                     vanillaColor = colorId;
-                 }
-             }
-         }
+        // Apply vanilla color first (colors whole box)
+        if (vanillaColor != -1) {
+            resolvedTop = vanillaColor;
+            resolvedBottom = vanillaColor;
+        }
 
-         // Apply vanilla color first (colors whole box)
-         if (vanillaColor != -1) {
-             resolvedTop = vanillaColor;
-             resolvedBottom = vanillaColor;
-         }
+        // Then apply position-specific colors (can override vanilla)
+        if (newTopColor != -1) resolvedTop = newTopColor;
+        if (newBottomColor != -1) resolvedBottom = newBottomColor;
 
-         // Then apply position-specific colors (can override vanilla)
-         if (newTopColor != -1) resolvedTop = newTopColor;
-         if (newBottomColor != -1) resolvedBottom = newBottomColor;
+        ItemStack resultStack;
+        if (resolvedTop == resolvedBottom && resolvedTop != -1) {
+            Item shulkerItem = Items.DYED_SHULKER_BOX.asList().get(resolvedTop);
+            resultStack = new ItemStack(shulkerItem);
+        } else {
+            resultStack = shulkerStack.copy();
+            resultStack.setCount(1);
+        }
 
-         ItemStack resultStack;
-         if (resolvedTop == resolvedBottom && resolvedTop != -1) {
-             //? if MC: >= 12105 {
-             Item shulkerItem = ShulkerBoxBlock.getItemStack(DyeColor.byIndex(resolvedTop)).getItem();
-             //?} else {
-             /*Item shulkerItem = ShulkerBoxBlock.getItemStack(DyeColor.byId(resolvedTop)).getItem();
-             *///?}
-             resultStack = new ItemStack(shulkerItem);
-         } else {
-             resultStack = shulkerStack.copy();
-             resultStack.setCount(1);
-         }
+        if (resolvedTop != resolvedBottom) {
+            ShulkerColors newColors = new ShulkerColors(resolvedTop, resolvedBottom);
+            applyColorsToStack(resultStack, newColors);
+        } else if (resultStack != shulkerStack) {
+            removeColorsFromItemStack(resultStack);
+        }
 
-         if (resolvedTop != resolvedBottom) {
-             ShulkerColors newColors = new ShulkerColors(resolvedTop, resolvedBottom);
-             applyColorsToStack(resultStack, newColors);
-         } else if (resultStack != shulkerStack) {
-             removeColorsFromItemStack(resultStack);
-         }
+        return resultStack;
+    }
 
-         return resultStack;
+    private static int colorIdOf(ItemStack dyeStack) {
+        DyeColor color = dyeStack.get(DataComponents.DYE);
+        return color == null ? -1 : color.getId();
     }
 
     private void applyColorsToStack(ItemStack stack, ShulkerColors colors) {
-        NbtComponent beData = stack.getOrDefault(DataComponentTypes.BLOCK_ENTITY_DATA, NbtComponent.DEFAULT);
-        NbtCompound nbt = beData.copyNbt();
+        CompoundTag nbt = MultiColorShulkers.copyBlockEntityTag(stack);
 
-        // Ensure the block entity ID is set (required for valid block entity data)
-        if (!nbt.contains("id")) {
-            nbt.putString("id", "minecraft:shulker_box");
-        }
-
-        //? if MC: >= 12105 {
-        var attachmentsOpt = nbt.getCompound("fabric:attachments");
-        NbtCompound attachments = attachmentsOpt.isPresent() ? attachmentsOpt.get() : new NbtCompound();
-        //?} else {
-        /*NbtCompound attachments = nbt.contains("fabric:attachments") ? nbt.getCompound("fabric:attachments") : new NbtCompound();
-        *///?}
-        NbtCompound colorNbt = new NbtCompound();
+        CompoundTag attachments = nbt.getCompoundOrEmpty("fabric:attachments");
+        CompoundTag colorNbt = new CompoundTag();
         colorNbt.putInt("topColor", colors.topColor());
         colorNbt.putInt("bottomColor", colors.bottomColor());
 
         attachments.put(MultiColorShulkers.MOD_ID + ":colors", colorNbt);
         nbt.put("fabric:attachments", attachments);
 
-        stack.set(DataComponentTypes.BLOCK_ENTITY_DATA, NbtComponent.of(nbt));
+        MultiColorShulkers.setBlockEntityTag(stack, nbt);
     }
 
     private void removeColorsFromItemStack(ItemStack stack) {
-         NbtComponent beData = stack.get(DataComponentTypes.BLOCK_ENTITY_DATA);
-         if (beData != null) {
-              NbtCompound nbt = beData.copyNbt();
-              if (nbt.contains("fabric:attachments")) {
-                  //? if MC: >= 12105 {
-                  var attachmentsOpt = nbt.getCompound("fabric:attachments"); // Optional
-                  NbtCompound attachments = attachmentsOpt.isPresent() ? attachmentsOpt.get() : new NbtCompound();
-                  //?} else {
-                  /*NbtCompound attachments = nbt.getCompound("fabric:attachments");
-                  *///?}
-                  attachments.remove(MultiColorShulkers.MOD_ID + ":colors");
-                  if (attachments.isEmpty()) nbt.remove("fabric:attachments");
-                  stack.set(DataComponentTypes.BLOCK_ENTITY_DATA, NbtComponent.of(nbt));
-              }
-         }
+        if (stack.get(DataComponents.BLOCK_ENTITY_DATA) == null) return;
+        CompoundTag nbt = MultiColorShulkers.copyBlockEntityTag(stack);
+        if (!nbt.contains("fabric:attachments")) return;
+
+        CompoundTag attachments = nbt.getCompoundOrEmpty("fabric:attachments");
+        attachments.remove(MultiColorShulkers.MOD_ID + ":colors");
+        if (attachments.isEmpty()) {
+            nbt.remove("fabric:attachments");
+        } else {
+            nbt.put("fabric:attachments", attachments);
+        }
+        MultiColorShulkers.setBlockEntityTag(stack, nbt);
     }
 
     private int getBaseColor(ItemStack stack) {
-        if (Block.getBlockFromItem(stack.getItem()) instanceof ShulkerBoxBlock shulkerBlock) {
-             //? if MC: >= 12105 {
-             if (shulkerBlock.getColor() != null) return shulkerBlock.getColor().ordinal();
-             //?} else {
-             /*if (shulkerBlock.getColor() != null) return shulkerBlock.getColor().getId();
-             *///?}
+        if (Block.byItem(stack.getItem()) instanceof ShulkerBoxBlock shulkerBlock) {
+            DyeColor color = shulkerBlock.getColor();
+            if (color != null) return color.getId();
         }
         return -1;
     }
 
     @Override
-    //? if MC: >=12102 {
-    public RecipeSerializer<? extends SpecialCraftingRecipe> getSerializer() {
-    //?} else {
-    /*public RecipeSerializer<?> getSerializer() {
-    *///?}
-        return MultiColorShulkers.DUAL_DYE_SERIALIZER;
+    public RecipeSerializer<? extends CustomRecipe> getSerializer() {
+        return SERIALIZER;
     }
 }

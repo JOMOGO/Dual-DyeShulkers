@@ -2,27 +2,27 @@ package com.multicolorshulkers.mixin;
 
 import com.multicolorshulkers.MultiColorShulkers;
 import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShulkerBoxBlock;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.ShulkerBoxBlockEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.ShulkerBoxBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-//? if MC: >=12105 {
-import net.fabricmc.fabric.api.attachment.v1.AttachmentTarget;
-//?}
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Block.class)
 public class BlockMixin {
-    @Inject(method = "onPlaced", at = @At("RETURN"))
-    public void onPlaced(World world, BlockPos pos, BlockState state, net.minecraft.entity.LivingEntity placer, ItemStack itemStack, CallbackInfo ci) {
-        if (world.isClient) return;
+    @Inject(method = "setPlacedBy", at = @At("RETURN"))
+    public void onSetPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack, CallbackInfo ci) {
+        if (world.isClientSide()) return;
 
         Block block = state.getBlock();
         if (block instanceof ShulkerBoxBlock) {
@@ -31,14 +31,10 @@ public class BlockMixin {
                 BlockEntity blockEntity = world.getBlockEntity(pos);
                 if (blockEntity instanceof ShulkerBoxBlockEntity shulkerBox) {
                     // Ensure colors are set on the block entity
-                    //? if MC: >=12105 {
-                    ((AttachmentTarget)shulkerBox).setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
-                    //?} else {
-                    /*shulkerBox.setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
-                    *///?}
-                    shulkerBox.markDirty();
+                    ((AttachmentTarget) shulkerBox).setAttached(MultiColorShulkers.SHULKER_COLORS, colors);
+                    shulkerBox.setChanged();
 
-                    if (world instanceof net.minecraft.server.world.ServerWorld serverWorld) {
+                    if (world instanceof ServerLevel serverWorld) {
                         // Track and sync
                         MultiColorShulkers.trackShulker(serverWorld, pos);
                         MultiColorShulkers.syncColorsToClients(serverWorld, pos, colors);
