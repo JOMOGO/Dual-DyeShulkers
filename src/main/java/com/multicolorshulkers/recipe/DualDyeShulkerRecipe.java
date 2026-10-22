@@ -221,7 +221,8 @@ public class DualDyeShulkerRecipe extends SpecialCraftingRecipe {
              //?} else {
              /*Item shulkerItem = ShulkerBoxBlock.getItemStack(DyeColor.byId(resolvedTop)).getItem();
              *///?}
-             resultStack = new ItemStack(shulkerItem);
+             // Keep contents, name and other components (like vanilla's shulker dye recipe)
+             resultStack = shulkerStack.copyComponentsToNewStack(shulkerItem, 1);
          } else {
              resultStack = shulkerStack.copy();
              resultStack.setCount(1);

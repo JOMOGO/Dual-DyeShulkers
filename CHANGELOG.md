@@ -1,5 +1,8 @@
 # Changelog
 
+## [1.3.1]
+- **Bug Fix**: Crafting a dual-colored shulker back to a single color no longer empties the box (contents, name and other data are kept)
+
 ## [1.3.0]
 - **Dual-Dye Crafting**: Added custom crafting recipe for applying different colors to shulker lid and base
   - Place dye above the shulker to color the lid
