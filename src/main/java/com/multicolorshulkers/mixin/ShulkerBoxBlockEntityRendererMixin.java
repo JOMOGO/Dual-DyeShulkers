@@ -66,11 +66,25 @@ public class ShulkerBoxBlockEntityRendererMixin {
 
         // Base is static: render it directly with the bottom sprite.
         RenderType bottomRenderType = bottomSprite.renderType(this.model.renderType());
+        //? if MC: >=260300 {
+        /*collector.submitModelPart(basePart, poseStack, bottomRenderType, light, overlay, this.sprites.get(bottomSprite), -1, 0);
+
+        // Lid animates with the open progress: submit it as a stateful model so the deferred
+        // renderer re-applies the animation per shulker at draw time (fixes shared-lid "linking").
+        collector.submitModel(lidModel(root), state.progress, poseStack, light, overlay, -1, topSprite, this.sprites, 0);
+
+        // 26.3 moved block-breaking cracks into a separate submit; mirror vanilla with the full model.
+        if (state.breakProgress != null) {
+            collector.order(1).submitCrumblingOverlay(this.model, state.progress, poseStack,
+                    bottomSprite.renderType(this.model.renderType()), light, overlay, -1, state.breakProgress);
+        }
+        *///?} else {
         collector.submitModelPart(basePart, poseStack, bottomRenderType, light, overlay, this.sprites.get(bottomSprite), -1, state.breakProgress, 0);
 
         // Lid animates with the open progress: submit it as a stateful model so the deferred
         // renderer re-applies the animation per shulker at draw time (fixes shared-lid "linking").
         collector.submitModel(lidModel(root), state.progress, poseStack, light, overlay, -1, topSprite, this.sprites, 0, state.breakProgress);
+        //?}
 
         poseStack.popPose();
     }

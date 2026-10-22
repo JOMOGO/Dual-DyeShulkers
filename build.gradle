@@ -67,10 +67,21 @@ loom {
     }
 }
 
-// Only configure run settings for the active version
+// End-to-end tests (Fabric GameTest + Client GameTest), sources in src/gametest
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "multicolor-shulkers-test"
+        enableGameTests = true
+        enableClientGameTests = true
+        eula = true
+    }
+}
+
+// Only configure run settings for the active version (gametest runs keep their own run dirs)
 if (stonecutter.current.isActive) {
     loom {
-        runConfigs.all {
+        runConfigs.matching { it.name in ["client", "server"] }.configureEach {
             ideConfigGenerated = true
             runDir "../../run"
         }

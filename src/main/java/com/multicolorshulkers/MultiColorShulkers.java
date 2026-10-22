@@ -28,6 +28,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.TypedEntityData;
+//? if MC: >=260300 {
+/*import net.minecraft.world.item.component.SwingAnimation;
+*///?}
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
@@ -180,7 +183,11 @@ public class MultiColorShulkers implements ModInitializer {
 			}
 
 			// Swing arm
+			//? if MC: >=260300 {
+			/*player.swing(hand, SwingAnimation.DEFAULT, true);
+			*///?} else {
 			player.swing(hand, true);
+			//?}
 		});
 
 		// Register cauldron behavior to wash off custom colors from shulker box items
