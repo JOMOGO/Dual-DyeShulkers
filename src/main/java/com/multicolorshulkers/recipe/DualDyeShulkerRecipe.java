@@ -157,7 +157,8 @@ public class DualDyeShulkerRecipe extends CustomRecipe {
         ItemStack resultStack;
         if (resolvedTop == resolvedBottom && resolvedTop != -1) {
             Item shulkerItem = Items.DYED_SHULKER_BOX.asList().get(resolvedTop);
-            resultStack = new ItemStack(shulkerItem);
+            // Transmute keeps contents, name and other components (like vanilla's shulker dye recipe)
+            resultStack = shulkerStack.transmuteCopy(shulkerItem, 1);
         } else {
             resultStack = shulkerStack.copy();
             resultStack.setCount(1);

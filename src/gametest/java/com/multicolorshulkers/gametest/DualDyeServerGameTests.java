@@ -5,12 +5,14 @@ import com.multicolorshulkers.MultiColorShulkers.ShulkerColors;
 import com.multicolorshulkers.recipe.DualDyeShulkerRecipe;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity;
@@ -106,6 +108,24 @@ public class DualDyeServerGameTests {
 		helper.assertTrue(result.is(Items.DYED_SHULKER_BOX.red()), "expected a red shulker box, got " + result);
 		ShulkerColors colors = MultiColorShulkers.getColorsFromItemStack(result);
 		helper.assertTrue(colors == null || colors.equals(ShulkerColors.DEFAULT), "expected no custom colors, got " + colors);
+		helper.succeed();
+	}
+
+	/** RULES 2: contents carry through, also when the result becomes a plain single-color shulker. */
+	@GameTest
+	public void sameColorCraftKeepsContents(GameTestHelper helper) {
+		ItemStack box = coloredShulker(RED, BLUE);
+		box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(new ItemStack(Items.DIAMOND, 5))));
+		ItemStack e = ItemStack.EMPTY;
+		CraftingInput input = CraftingInput.of(3, 3, List.of(
+				e, new ItemStack(Items.DYE.green()), e,
+				e, box, e,
+				e, new ItemStack(Items.DYE.green()), e));
+
+		ItemStack result = DualDyeShulkerRecipe.INSTANCE.assemble(input);
+		helper.assertTrue(result.is(Items.DYED_SHULKER_BOX.green()), "expected a green shulker box, got " + result);
+		ItemContainerContents contents = result.get(DataComponents.CONTAINER);
+		helper.assertTrue(contents != null && contents.nonEmptyItems().iterator().hasNext(), "shulker contents were lost");
 		helper.succeed();
 	}
 }
