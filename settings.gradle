@@ -9,6 +9,8 @@ pluginManagement {
 
 plugins {
     id 'dev.kikugie.stonecutter' version '0.8.3'
+    // Auto-provisions the JDK 21 used to launch Minecraft (see build.gradle)
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
 
 stonecutter {
