@@ -142,8 +142,19 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 		if (key.getCategory() == InputUtil.Type.KEYSYM) {
 			return InputUtil.isKeyPressed(handle, key.getCode());
 		} else if (key.getCategory() == InputUtil.Type.MOUSE) {
-			return GLFW.glfwGetMouseButton(handle, key.getCode()) == GLFW.GLFW_PRESS;
+			return isMouseButtonPressed(client, handle, key.getCode());
 		}
 		return false;
+	}
+
+	/**
+	 * Primary buttons go through Mouse (also driven by simulated input in client gametests);
+	 * extra buttons fall back to polling the native window state.
+	 */
+	private static boolean isMouseButtonPressed(MinecraftClient client, long handle, int button) {
+		if (button == GLFW.GLFW_MOUSE_BUTTON_LEFT) return client.mouse.wasLeftButtonClicked();
+		if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT) return client.mouse.wasRightButtonClicked();
+		if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) return client.mouse.wasMiddleButtonClicked();
+		return GLFW.glfwGetMouseButton(handle, button) == GLFW.GLFW_PRESS;
 	}
 }

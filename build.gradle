@@ -56,10 +56,24 @@ loom {
     }
 }
 
+// End-to-end tests (Fabric GameTest + Client GameTest), sources in src/gametest.
+// 1.21.1 and 1.21.4 use older test APIs and are not covered yet.
+if (mcVersionNum >= 12105) {
+    fabricApi {
+        configureTests {
+            createSourceSet = true
+            modId = "multicolor-shulkers-test"
+            enableGameTests = true
+            enableClientGameTests = true
+            eula = true
+        }
+    }
+}
+
 // Only configure run settings for the active version
 if (stonecutter.current.isActive) {
     loom {
-        runConfigs.all {
+        runConfigs.matching { it.name in ["client", "server"] }.configureEach {
             ideConfigGenerated = true
             runDir "../../run"
         }
@@ -94,6 +108,13 @@ processResources {
 tasks.withType(JavaCompile).configureEach {
     it.options.release = 21
     it.options.compilerArgs << "-Xdiags:verbose"
+}
+
+// Launch Minecraft (runClient, game tests) on Java 21 like players do; Fabric Loader 0.16 cannot run on newer Java
+tasks.withType(JavaExec).configureEach {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 java {
