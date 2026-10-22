@@ -1,7 +1,9 @@
 package com.multicolorshulkers.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
+//? if MC: <260300 {
 import org.lwjgl.glfw.GLFW;
+//?}
 import com.multicolorshulkers.MultiColorShulkers;
 
 public class ClientConfigHelper {
@@ -11,6 +13,16 @@ public class ClientConfigHelper {
     private static KeyCombo cachedBottomCombo;
 
     // Default combos
+    //? if MC: >=260300 {
+    /*public static final KeyCombo DEFAULT_TOP_COMBO = new KeyCombo(
+            InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_LSHIFT),
+            InputConstants.Type.MOUSE.getOrCreate(InputConstants.MOUSE_BUTTON_RIGHT)
+    );
+    public static final KeyCombo DEFAULT_BOTTOM_COMBO = new KeyCombo(
+            InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_LCONTROL),
+            InputConstants.Type.MOUSE.getOrCreate(InputConstants.MOUSE_BUTTON_RIGHT)
+    );
+    *///?} else {
     public static final KeyCombo DEFAULT_TOP_COMBO = new KeyCombo(
             InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_LEFT_SHIFT),
             InputConstants.Type.MOUSE.getOrCreate(GLFW.GLFW_MOUSE_BUTTON_RIGHT)
@@ -19,6 +31,7 @@ public class ClientConfigHelper {
             InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_LEFT_CONTROL),
             InputConstants.Type.MOUSE.getOrCreate(GLFW.GLFW_MOUSE_BUTTON_RIGHT)
     );
+    //?}
 
     public static KeyCombo getTopCombo(ModConfig config) {
         if (cachedTopCombo == null) {

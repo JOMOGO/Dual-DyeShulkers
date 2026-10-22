@@ -58,11 +58,19 @@ public class ShulkerBoxModelRendererMixin {
 
         // Base is static.
         RenderType bottomRenderType = bottomSprite.renderType(model.renderType());
+        //? if MC: >=260300 {
+        /*collector.submitModelPart(basePart, poseStack, bottomRenderType, light, overlay, sprites.get(bottomSprite), -1, outlineColor);
+        *///?} else {
         collector.submitModelPart(basePart, poseStack, bottomRenderType, light, overlay, sprites.get(bottomSprite), -1, null, outlineColor);
+        //?}
 
         // Lid: submit as a stateful model at this item's openness so the shared lid pose is
         // re-applied per instance (avoids leaking a placed shulker's animation onto item renders).
+        //? if MC: >=260300 {
+        /*collector.submitModel(lidModel(root), this.openness, poseStack, light, overlay, -1, topSprite, sprites, outlineColor);
+        *///?} else {
         collector.submitModel(lidModel(root), this.openness, poseStack, light, overlay, -1, topSprite, sprites, outlineColor, null);
+        //?}
     }
 
     @Unique

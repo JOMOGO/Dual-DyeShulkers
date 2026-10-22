@@ -1,0 +1,18 @@
+{
+	"schemaVersion": 1,
+	"id": "multicolor-shulkers-test",
+	"version": "1.0.0",
+	"name": "Dual-Dye Shulkers Tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"com.multicolorshulkers.gametest.DualDyeServerGameTests"
+		],
+		"fabric-client-gametest": [
+			"com.multicolorshulkers.gametest.DualDyeClientGameTest"
+		]
+	},
+	"depends": {
+		"multicolor-shulkers": "*"
+	}
+}

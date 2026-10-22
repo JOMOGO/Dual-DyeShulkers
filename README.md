@@ -2,7 +2,7 @@
 
 [![Modrinth](https://img.shields.io/modrinth/dt/dual-dye-shulkers?logo=modrinth&label=Modrinth)](https://modrinth.com/project/dual-dye-shulkers)
 
-A Fabric mod for Minecraft 1.21.1+ that lets you apply different colors to the **top (lid)** and **bottom (base)** of shulker boxes!
+A Fabric mod for Minecraft 1.21.1 – 26.3 that lets you apply different colors to the **top (lid)** and **bottom (base)** of shulker boxes!
 
 ## Features
 
@@ -10,8 +10,10 @@ A Fabric mod for Minecraft 1.21.1+ that lets you apply different colors to the *
 - **Configurable controls** (default):
   - Shift + right-click with dye → colors the **top (lid)**
   - Ctrl + right-click with dye → colors the **bottom (base)**
+- **Crafting recipe** - Dye above the shulker colors the lid, dye below colors the base
 - **Works with all 16 dye colors** (256 combinations!)
 - **Colors persist** through break/place cycles
+- **Creative pick-block** copies the exact colors
 - **Cauldron washing** - Remove custom colors with a water cauldron
 - **Tooltip display** - See applied colors when hovering over items
 - **Full 3D rendering** - Colors display correctly on placed blocks and items
@@ -21,7 +23,8 @@ A Fabric mod for Minecraft 1.21.1+ that lets you apply different colors to the *
 1. Place a shulker box
 2. Hold any dye and Shift+right-click the shulker to color the **lid**
 3. Hold any dye and Ctrl+right-click to color the **base**
-4. To remove colors, use a water cauldron on the shulker box item
+4. Or craft it: put the shulker box in a crafting grid with a dye above it (lid) and/or below it (base)
+5. To remove colors, use a water cauldron on the shulker box item
 
 ## Configuration
 
@@ -36,8 +39,8 @@ Key combos can be any combination of two keys/mouse buttons.
 
 ## Requirements
 
-- Minecraft 1.21.1 or 1.21.4 (more versions coming soon!)
-- Fabric Loader 0.16.0+
+- Minecraft 1.21.1, 1.21.4 – 1.21.8, 26.2 or 26.3
+- Fabric Loader 0.16.0+ (1.21.x) or 0.19.0+ with Java 25 (26.x)
 - [Fabric API](https://modrinth.com/mod/fabric-api)
 
 **Optional:**
@@ -65,6 +68,22 @@ gradlew.bat build
 ```
 
 The output JAR will be in `versions/<mc-version>/build/libs/`.
+
+Minecraft 1.21.x is built from the `master` branch, 26.x from the `26.x` branch.
+
+## Tests
+
+End-to-end tests use [Fabric GameTest](https://docs.fabricmc.net/develop/automatic-testing) and live in `src/gametest`.
+
+```bash
+# Server game tests (headless, also run by `build`)
+./gradlew 26.3:runGameTest
+
+# Client game tests: real client with simulated input and screenshot checks
+./gradlew 26.3:runClientGameTest
+```
+
+Screenshots are saved to `versions/<mc-version>/build/run/clientGameTest/screenshots/`.
 
 ## License
 

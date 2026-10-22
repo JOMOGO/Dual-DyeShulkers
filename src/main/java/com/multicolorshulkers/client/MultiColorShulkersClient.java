@@ -15,7 +15,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.level.block.ShulkerBoxBlock;
+//? if MC: >=260300 {
+/*import net.minecraft.world.item.component.SwingAnimation;
+import org.lwjgl.sdl.SDLMouse;
+*///?} else {
 import org.lwjgl.glfw.GLFW;
+//?}
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -105,7 +110,11 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 			ClientPlayNetworking.send(new DyeRequestPayload(blockPos, colorBottom));
 
 			// Swing hand visually
+			//? if MC: >=260300 {
+			/*player.swing(hand, SwingAnimation.DEFAULT, false);
+			*///?} else {
 			player.swing(hand);
+			//?}
 
 			// Return FAIL to prevent the client from opening the shulker box.
 			return InteractionResult.FAIL;
@@ -137,11 +146,35 @@ public class MultiColorShulkersClient implements ClientModInitializer {
 		Window window = client.getWindow();
 		if (window == null) return false;
 
+		//? if MC: >=260300 {
+		/*if (key.getType() == InputConstants.Type.KEYBOARD) {
+			return InputConstants.isKeyDown(key.getValue());
+		} else if (key.getType() == InputConstants.Type.MOUSE) {
+			return isMouseButtonPressed(client, key.getValue());
+		}
+		*///?} else {
 		if (key.getType() == InputConstants.Type.KEYSYM) {
 			return InputConstants.isKeyDown(window, key.getValue());
 		} else if (key.getType() == InputConstants.Type.MOUSE) {
-			return GLFW.glfwGetMouseButton(window.handle(), key.getValue()) == GLFW.GLFW_PRESS;
+			return isMouseButtonPressed(client, key.getValue());
 		}
+		//?}
 		return false;
+	}
+
+	/**
+	 * Primary buttons go through MouseHandler (also driven by simulated input in client gametests);
+	 * extra buttons fall back to polling the native window state.
+	 */
+	private static boolean isMouseButtonPressed(Minecraft client, int button) {
+		if (button == InputConstants.MOUSE_BUTTON_LEFT) return client.mouseHandler.isLeftPressed();
+		if (button == InputConstants.MOUSE_BUTTON_RIGHT) return client.mouseHandler.isRightPressed();
+		if (button == InputConstants.MOUSE_BUTTON_MIDDLE) return client.mouseHandler.isMiddlePressed();
+		//? if MC: >=260300 {
+		/*// SDL button mask: SDL_BUTTON_MASK(b) = 1 << (b - 1)
+		return (SDLMouse.SDL_GetMouseState(null, null) & (1 << (button - 1))) != 0;
+		*///?} else {
+		return GLFW.glfwGetMouseButton(client.getWindow().handle(), button) == GLFW.GLFW_PRESS;
+		//?}
 	}
 }
